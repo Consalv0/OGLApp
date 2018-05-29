@@ -168,6 +168,7 @@ oaLight:
   _id: 182247900
   oaComponent:
     _entityID: 182247448
+  color: [1, 1, 1]
   castShadows: true
   resolution: 1024
   intensity: 0

@@ -18,31 +18,31 @@ oaTransform::oaTransform() {
 }
 
 glm::vec3 oaTransform::forward() {
-	return glm::vec3(0, 0, -1) * rotation;
+	return rotation * glm::vec3(0, 0, 1);
 }
 
 glm::vec3 oaTransform::back() {
-	return glm::vec3(0, 0, 1) * rotation;
+	return rotation * glm::vec3(0, 0, -1);
 }
 
 glm::vec3 oaTransform::right() {
-	return glm::vec3(1, 0, 0) * rotation;
+	return rotation * glm::vec3(-1, 0, 0);
 }
 
 glm::vec3 oaTransform::left() {
-	return glm::vec3(-1, 0, 0) * rotation;
+	return rotation * glm::vec3(1, 0, 0);
 }
 
 glm::vec3 oaTransform::up() {
-	return glm::vec3(0, 1, 0) * rotation;
+	return rotation * glm::vec3(0, 1, 0);
 }
 
 glm::vec3 oaTransform::down() {
-	return glm::vec3(0, -1, 0) * rotation;
+	return rotation * glm::vec3(0, -1, 0);
 }
 
 void oaTransform::lookAt(glm::vec3 target) {
-	rotation = glm::lookAt(target, position, glm::vec3(0, 1, 0));
+	rotation = glm::lookAt(position, target, glm::vec3(0, 1, 0));
 }
 
 void oaTransform::rotate(const float & x, const float & y, const float & z) {
@@ -52,7 +52,7 @@ void oaTransform::rotate(const float & x, const float & y, const float & z) {
 }
 
 glm::mat4 oaTransform::getObjectSpace() {
-	return glm::translate(position) * glm::transpose(glm::mat4(rotation)) * glm::scale(scale);
+	return glm::translate(position) * glm::mat4(rotation) * glm::scale(scale);
 }
 
 REGISTER_CLASS(oaTransform)

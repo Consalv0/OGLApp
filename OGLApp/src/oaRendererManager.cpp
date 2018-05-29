@@ -134,7 +134,7 @@ void oaRendererManager::renderScene() {
 			for (auto& renderer : iterator.second) {
 				material->setUniforms(
 					&renderCamera->getProyection(),
-					&glm::inverse(renderCamera->transform()->getObjectSpace()),
+					&renderCamera->transform()->getObjectSpace(),
 					&renderer->getEntity()->transform()->getObjectSpace(),
 					&renderCamera->transform()->position,
 					&*renderer->light

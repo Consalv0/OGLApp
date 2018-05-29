@@ -5,6 +5,7 @@
 
 class oaLight : public oaBehavior {
 public:
+	glm::vec3 color;
 	bool castShadows;
 	int resolution;
 	float intensity;
@@ -39,6 +40,10 @@ namespace YAML {
 		static Node encode(const oaLight& rhs) {
 			Node node;
 			node["oaLight"] = (oaComponent)rhs;
+			node["oaLight"]["color"].SetStyle(YAML::EmitterStyle::Flow);
+			node["oaLight"]["color"].push_back(rhs.color.x);
+			node["oaLight"]["color"].push_back(rhs.color.y);
+			node["oaLight"]["color"].push_back(rhs.color.z);
 			node["oaLight"]["castShadows"] = rhs.castShadows;
 			node["oaLight"]["resolution"] = rhs.resolution;
 			node["oaLight"]["intensity"] = rhs.intensity;
@@ -52,6 +57,9 @@ namespace YAML {
 			}
 
 			rhs = oaLight(node["oaLight"].as<oaComponent>());
+			rhs.color.x = node["oaLight"]["color"][0].as<float>();
+			rhs.color.y = node["oaLight"]["color"][1].as<float>();
+			rhs.color.z = node["oaLight"]["color"][2].as<float>();
 			rhs.castShadows = node["oaLight"]["castShadows"].as<bool>();
 			rhs.resolution = node["oaLight"]["resolution"].as<int>();
 			rhs.intensity = node["oaLight"]["intensity"].as<float>();

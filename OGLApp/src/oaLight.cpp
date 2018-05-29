@@ -29,8 +29,8 @@ glm::mat4 oaLight::getProyection() {
 
 glm::mat4 oaLight::getView() {
 	return glm::lookAt(
-		transform()->position + transform()->forward(),	     // Look position
 		transform()->position,   // Camera position
+		transform()->position + transform()->forward(),	     // Look position
 		glm::vec3(0, 1, 0)       // Up vector
 	);
 }
@@ -87,6 +87,7 @@ oaLight::oaLight() {
 	shadowMapTexture = NULL;
 	castShadows = true;
 	resolution = 512;
+	color = glm::vec3(0, 0, 0);
 }
 
 oaLight::~oaLight() {

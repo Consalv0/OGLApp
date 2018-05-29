@@ -61,10 +61,10 @@ void oaMaterial::setUniforms(
 
 		      glUniform3fv( eyePositionID, 1, glm::value_ptr(*eyePosition) );
 					
-		      glUniform3fv(  lightPositionID, 1, glm::value_ptr(light->transform()->position) );
-		      glUniform3fv( lightDirectionID, 1, glm::value_ptr(light->transform()->forward()));
-		      glUniform3fv(     lightColorID, 1, glm::value_ptr(glm::vec3(1))                 );
-		      glUniform1fv(    lightRadiusID, 1, &light->intensity                            );
+		      glUniform3fv(  lightPositionID, 1, glm::value_ptr(light->transform()->position)  );
+		      glUniform3fv( lightDirectionID, 1, glm::value_ptr(light->transform()->forward()) );
+		      glUniform3fv(     lightColorID, 1, glm::value_ptr(light->color)                  );
+		      glUniform1fv(    lightRadiusID, 1, &light->intensity                             );
 
 		      glUniform3fv( specularColorID, 1, glm::value_ptr(specularColor) );
 		      glUniform3fv(  ambientColorID, 1, glm::value_ptr(ambientColor)  );

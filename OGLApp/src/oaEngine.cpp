@@ -99,8 +99,8 @@ void oaEngine::awakeEngine() {
 		if (newKeySave == GLFW_RELEASE && oldKeySave == GLFW_PRESS 
 			&& glfwGetKey(oaEngine::getWindowHandle(), GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) 
 		{
-			printf("Saving data in '%s'...\n", "common\scenes\main.yaml");
-			oaSerializer::emitObjects("common\scenes\main.yaml");
+			printf("Saving data in '%s'...\n", "common\\scenes\\main.yaml");
+			oaSerializer::emitObjects("common\\scenes\\main.yaml");
 		}
 		oldKeySave = newKeySave;
 
@@ -172,8 +172,8 @@ void oaEngine::closeApplication() {
 void oaEngine::awake() {
 	glfwSetWindowSizeCallback(_windowHandle, onWindowResized);
 
-	printf("Reciving scene data '%s'...\n", "common\scenes\main.yaml");
-	if (oaSerializer::reciveScene("common\scenes\main.yaml")) {
+	printf("Reciving scene data '%s'...\n", "common\\scenes\\main.yaml");
+	if (oaSerializer::reciveScene("common\\scenes\\main.yaml")) {
 		oaObjectManager::awake();
 	} else {
 		oaObjectManager::clear();
