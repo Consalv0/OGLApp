@@ -1,0 +1,215 @@
+oaTransform:
+  _id: 170706404
+  oaComponent:
+    _entityID: 207830888
+  position: [0, -1, -1.5]
+  rotation: [0, 0, 0, 1]
+  scale: [1, 1, 1]
+---
+oaTransform:
+  _id: 170716404
+  oaComponent:
+    _entityID: 207831888
+  position: [0, -1, 1.5]
+  rotation: [0, 0, 0, 1]
+  scale: [0.6, 0.6, 0.6]
+---
+oaMaterial:
+  _id: 222720708
+  vertexShaderPath: common\shaders\PBLShader_vertex.glsl
+  fragmentShaderPath: common\shaders\PBLShader_fragment.glsl
+  texturePath: white
+  normalTexturePath: white
+  metalnessTexturePath: white
+  roughnessTexturePath: white
+  enableZBuffer: true
+  depthFunction: 513
+  polygonMode: 6914
+  specularColor: [1, 1, 1]
+  ambientColor: [1, 1, 1]
+  diffuseColor: [1, 1, 1, 1]
+  roughness: 0.8
+  metallic: 0
+---
+oaMeshRenderer:
+  _id: 222610044
+  oaComponent:
+    _entityID: 182247448
+  material:
+    _id: 222720708
+  mesh: common\models\arrow.obj
+  castShadow: false
+  light: 0
+---
+oaTransform:
+  _id: 210829124
+  oaComponent:
+    _entityID: 209146816
+  position: [0, 3, 0]
+  rotation: [0, 1, 0, 0]
+  scale: [1, 1, 1]
+---
+oaTransform:
+  _id: 216829124
+  oaComponent:
+    _entityID: 206146816
+  position: [0, 0, 0]
+  rotation: [-0.383, 0, -0.924, 0]
+  scale: [1, 1, 1]
+---
+oaMaterial:
+  _id: 143383148
+  vertexShaderPath: common\shaders\PBLShader_vertex.glsl
+  fragmentShaderPath: common\shaders\PBLShader_cell_fragment.glsl
+  texturePath: common\textures\SquitwardHouse_DefaultMaterial_BaseColor.png
+  normalTexturePath: common\textures\SquitwardHouse_DefaultMaterial_Normal.png
+  metalnessTexturePath: common\textures\SquitwardHouse_DefaultMaterial_Metallic.png
+  roughnessTexturePath: common\textures\SquitwardHouse_DefaultMaterial_Roughness.png
+  enableZBuffer: true
+  depthFunction: 513
+  polygonMode: 6914
+  specularColor: [1, 1, 1]
+  ambientColor: [0.2, 0.2, 0.2]
+  diffuseColor: [1, 1, 1, 0]
+  roughness: 1
+  metallic: 1
+---
+oaMaterial:
+  _id: 143385148
+  vertexShaderPath: common\shaders\PBLShader_vertex.glsl
+  fragmentShaderPath: common\shaders\PBLShader_cell_fragment.glsl
+  texturePath: common\textures\PinappleHouse_DefaultMaterial_BaseColor.png
+  normalTexturePath: common\textures\PinappleHouse_DefaultMaterial_Normal.png
+  metalnessTexturePath: common\textures\PinappleHouse_DefaultMaterial_Metallic.png
+  roughnessTexturePath: common\textures\PinappleHouse_DefaultMaterial_Roughness.png
+  enableZBuffer: true
+  depthFunction: 513
+  polygonMode: 6914
+  specularColor: [0, 0.3, 1]
+  ambientColor: [0.2, 0.2, 0.2]
+  diffuseColor: [1, 1, 1, 0]
+  roughness: 1
+  metallic: 1
+---
+oaMaterial:
+  _id: 143285148
+  vertexShaderPath: common\shaders\PBLShader_vertex.glsl
+  fragmentShaderPath: common\shaders\PBLShader_cell_fragment.glsl
+  texturePath: common\textures\EscafandraMV1971_BaseColor.png
+  normalTexturePath: common\textures\SquitwardHouse_DefaultMaterial_Normal.png
+  metalnessTexturePath: common\textures\EscafandraMV1971_Metallic.png
+  roughnessTexturePath: common\textures\EscafandraMV1971_Roughness.png
+  enableZBuffer: true
+  depthFunction: 513
+  polygonMode: 6914
+  specularColor: [0.9, 0.4, 0.2]
+  ambientColor: [0.2, 0.2, 0.2]
+  diffuseColor: [1, 1, 1, 0]
+  roughness: 1
+  metallic: 1
+---
+luaTest:
+  _id: 170709644
+  oaComponent:
+    _entityID: 207830888
+  luaScriptPath: common\scripts\script.lua
+---
+luaTest:
+  _id: 170719644
+  oaComponent:
+    _entityID: 207831888
+  luaScriptPath: common\scripts\script.lua
+---
+luaTest:
+  _id: 170707844
+  oaComponent:
+    _entityID: 182247448
+  luaScriptPath: common\scripts\light.lua
+---
+oaMeshRenderer:
+  _id: 143396012
+  oaComponent:
+    _entityID: 207830888
+  material:
+    _id: 143383148
+  mesh: common\models\SquidwardHouse.obj
+  castShadow: true
+  light: 0
+---
+oaMeshRenderer:
+  _id: 143396112
+  oaComponent:
+    _entityID: 207831888
+  material:
+    _id: 143385148
+  mesh: common\models\PinappleHouse.obj
+  castShadow: true
+  light: 0
+---
+oaMeshRenderer:
+  _id: 10426476
+  oaComponent:
+    _entityID: 209146816
+  material:
+    _id: 143383148
+  mesh: common\models\cubeRoom.obj
+  castShadow: true
+  light: 0
+---
+oaCamera:
+  _id: 10626476
+  oaComponent:
+    _entityID: 206146816
+  apertureAngle: 45
+  nearPlane: 0.1
+  farPlane: 100
+---
+oaLight:
+  _id: 182247900
+  oaComponent:
+    _entityID: 182247448
+  castShadows: true
+  resolution: 1024
+  intensity: 0
+---
+oaTransform:
+  _id: 222683084
+  oaComponent:
+    _entityID: 182247448
+  position: [3, 0, 3]
+  rotation: [0, 0, 0, 1]
+  scale: [0.2, 0.2, 0.2]
+---
+oaEntity:
+  _id: 209146816
+  _components:
+    - 10426476
+    - 210829124
+---
+oaEntity:
+  _id: 206146816
+  _components:
+    - 10626476
+    - 216829124
+---
+oaEntity:
+  _id: 207830888
+  _components:
+    - 170706404
+    - 170709644
+    - 143396012
+---
+oaEntity:
+  _id: 207831888
+  _components:
+    - 170716404
+    - 170719644
+    - 143396112
+---
+oaEntity:
+  _id: 182247448
+  _components:
+    - 182247900
+    - 222683084
+    - 222610044
+    - 170707844
