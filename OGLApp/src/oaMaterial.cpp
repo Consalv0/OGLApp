@@ -6,15 +6,9 @@
 #include "oaLight.h"
 
 void oaMaterial::initialize() {
-	programID = oaShaderLoader::loadShader(vertexShaderPath.c_str(), fragmentShaderPath.c_str());
-
-	bool hasAlpha;
-	textureDataID = oaImageLoader::loadImage(texturePath, textureWidth, textureHeight, hasAlpha);
-	normalTextureDataID = oaImageLoader::loadImage(normalTexturePath, textureWidth, textureHeight, hasAlpha);
-	roughnessTextureDataID = oaImageLoader::loadImage(roughnessTexturePath, textureWidth, textureHeight, hasAlpha);
-	metallicTextureDataID = oaImageLoader::loadImage(metalnessTexturePath, textureWidth, textureHeight, hasAlpha);
-
-	bindUniformIDs();
+	loadShader();
+	loadTextures();
+	getUniformIDs();
 }
 
 GLuint oaMaterial::getProgramID() {
@@ -22,7 +16,7 @@ GLuint oaMaterial::getProgramID() {
 	return programID;
 }
 
-void oaMaterial::bindUniformIDs() {
+void oaMaterial::getUniformIDs() {
 		  projectionMatrixID = glGetUniformLocation(getProgramID(), "_projectionMatrix");
 		        viewMatrixID = glGetUniformLocation(getProgramID(), "_viewMatrix");
 		       modelMatrixID = glGetUniformLocation(getProgramID(), "_modelMatrix");
@@ -46,6 +40,36 @@ void oaMaterial::bindUniformIDs() {
 				 shadowTextureID = glGetUniformLocation(getProgramID(), "_shadowTexture");
 }
 
+void oaMaterial::loadShader() {
+	programID = oaShaderLoader::loadShader(vertexShaderPath.c_str(), fragmentShaderPath.c_str());
+}
+
+void oaMaterial::loadTextures() {
+	bool hasAlpha;
+	textureDataID = oaImageLoader::loadImage(texturePath, textureWidth, textureHeight, hasAlpha);
+	normalTextureDataID = oaImageLoader::loadImage(normalTexturePath, textureWidth, textureHeight, hasAlpha);
+	roughnessTextureDataID = oaImageLoader::loadImage(roughnessTexturePath, textureWidth, textureHeight, hasAlpha);
+	metallicTextureDataID = oaImageLoader::loadImage(metalnessTexturePath, textureWidth, textureHeight, hasAlpha);
+}
+
+void oaMaterial::setUniformConstants() {
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, textureDataID);
+	glUniform1i(textureID, 0);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, normalTextureDataID);
+	glUniform1i(normalTextureID, 1);
+
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, metallicTextureDataID);
+	glUniform1i(metallicTextureID, 2);
+
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, roughnessTextureDataID);
+	glUniform1i(roughnessTextureID, 3);
+}
+
 void oaMaterial::setUniforms(
 	glm::mat4 * projectionMatrix,
 	glm::mat4 * viewMatrix,
@@ -53,44 +77,30 @@ void oaMaterial::setUniforms(
 	glm::vec3 * eyePosition,
 	oaLight * light) 
 {
-		glUniformMatrix4fv(   projectionMatrixID, 1, GL_FALSE, &(*projectionMatrix)[0][0]                          );
-		glUniformMatrix4fv(         viewMatrixID, 1, GL_FALSE, &(*viewMatrix)[0][0]                                );
-		glUniformMatrix4fv(        modelMatrixID, 1, GL_FALSE, &(*modelMatrix)[0][0]                               );
-		glUniformMatrix4fv( normalWorldlMatrixID, 1, GL_FALSE, &(glm::transpose(glm::inverse(*modelMatrix)))[0][0] );
-		glUniformMatrix4fv(        lightMatrixID, 1, GL_FALSE, &(light->getLightSpace())[0][0]                     );
+	glUniformMatrix4fv(   projectionMatrixID, 1, GL_FALSE, &(*projectionMatrix)[0][0]                          );
+	glUniformMatrix4fv(         viewMatrixID, 1, GL_FALSE, &(*viewMatrix)[0][0]                                );
+	glUniformMatrix4fv(        modelMatrixID, 1, GL_FALSE, &(*modelMatrix)[0][0]                               );
+	glUniformMatrix4fv( normalWorldlMatrixID, 1, GL_FALSE, &(glm::transpose(glm::inverse(*modelMatrix)))[0][0] );
+	glUniformMatrix4fv(        lightMatrixID, 1, GL_FALSE, &(light->getLightSpace())[0][0]                     );
 
-		      glUniform3fv( eyePositionID, 1, glm::value_ptr(*eyePosition) );
-					
-		      glUniform3fv(  lightPositionID, 1, glm::value_ptr(light->transform()->position)  );
-		      glUniform3fv( lightDirectionID, 1, glm::value_ptr(light->transform()->forward()) );
-		      glUniform3fv(     lightColorID, 1, glm::value_ptr(light->color)                  );
-		      glUniform1fv(    lightRadiusID, 1, &light->intensity                             );
+	glUniform3fv( eyePositionID, 1, glm::value_ptr(*eyePosition) );
+	
+	glUniform3fv(  lightPositionID, 1, glm::value_ptr(light->transform()->position)  );
+	glUniform3fv( lightDirectionID, 1, glm::value_ptr(light->transform()->forward()) );
+	glUniform3fv(     lightColorID, 1, glm::value_ptr(light->color)                  );
+	glUniform1fv(    lightRadiusID, 1, &light->intensity                             );
 
-		      glUniform3fv( specularColorID, 1, glm::value_ptr(specularColor) );
-		      glUniform3fv(  ambientColorID, 1, glm::value_ptr(ambientColor)  );
-		      glUniform4fv(  diffuseColorID, 1, glm::value_ptr(diffuseColor)  );
-		      glUniform1fv(     roughnessID, 1, &roughness                    );
-		      glUniform1fv(      metallicID, 1, &metallic                     ); 
+	glUniform3fv( specularColorID, 1, glm::value_ptr(specularColor) );
+	glUniform3fv(  ambientColorID, 1, glm::value_ptr(ambientColor)  );
+	glUniform4fv(  diffuseColorID, 1, glm::value_ptr(diffuseColor)  );
+	glUniform1fv(     roughnessID, 1, &roughness                    );
+	glUniform1fv(      metallicID, 1, &metallic                     );
 
-					glActiveTexture(GL_TEXTURE0);
-					glBindTexture(GL_TEXTURE_2D, textureDataID);
-					glUniform1i(textureID, 0);
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, light->shadowMapTexture);
+	glUniform1i(shadowTextureID, 4);
 
-					glActiveTexture(GL_TEXTURE1);
-					glBindTexture(GL_TEXTURE_2D, normalTextureDataID);
-					glUniform1i(normalTextureID, 1);
-
-					glActiveTexture(GL_TEXTURE2);
-					glBindTexture(GL_TEXTURE_2D, metallicTextureDataID);
-					glUniform1i(metallicTextureID, 2);
-
-					glActiveTexture(GL_TEXTURE3);
-					glBindTexture(GL_TEXTURE_2D, roughnessTextureDataID);
-					glUniform1i(roughnessTextureID, 3);
-
-					glActiveTexture(GL_TEXTURE4);
-					glBindTexture(GL_TEXTURE_2D, light->shadowMapTexture);
-					glUniform1i(shadowTextureID, 4);
+	setUniformConstants();
 }
 
 oaMaterial::oaMaterial(oaObject object) : oaMaterial() {
@@ -117,7 +127,6 @@ oaMaterial::oaMaterial() {
 }
 
 oaMaterial::~oaMaterial() {
-	// oaObjectManager::deleteObjectByID(_id);
 }
 
 REGISTER_CLASS(oaMaterial)

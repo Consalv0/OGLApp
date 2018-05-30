@@ -16,7 +16,7 @@ oaTransform:
 ---
 oaMaterial:
   _id: 222720708
-  vertexShaderPath: common\shaders\PBLShader_vertex.glsl
+  vertexShaderPath: common\shaders\Base_vertex.glsl
   fragmentShaderPath: common\shaders\PBLShader_fragment.glsl
   texturePath: white
   normalTexturePath: white
@@ -59,7 +59,7 @@ oaTransform:
 ---
 oaMaterial:
   _id: 143383148
-  vertexShaderPath: common\shaders\PBLShader_vertex.glsl
+  vertexShaderPath: common\shaders\Base_vertex.glsl
   fragmentShaderPath: common\shaders\PBLShader_fragment.glsl
   texturePath: common\textures\SquitwardHouse_DefaultMaterial_BaseColor.png
   normalTexturePath: common\textures\SquitwardHouse_DefaultMaterial_Normal.png
@@ -76,7 +76,7 @@ oaMaterial:
 ---
 oaMaterial:
   _id: 143385148
-  vertexShaderPath: common\shaders\PBLShader_vertex.glsl
+  vertexShaderPath: common\shaders\Base_vertex.glsl
   fragmentShaderPath: common\shaders\PBLShader_fragment.glsl
   texturePath: common\textures\PinappleHouse_DefaultMaterial_BaseColor.png
   normalTexturePath: common\textures\PinappleHouse_DefaultMaterial_Normal.png
@@ -93,7 +93,7 @@ oaMaterial:
 ---
 oaMaterial:
   _id: 143285148
-  vertexShaderPath: common\shaders\PBLShader_vertex.glsl
+  vertexShaderPath: common\shaders\Base_vertex.glsl
   fragmentShaderPath: common\shaders\PBLShader_fragment.glsl
   texturePath: common\textures\EscafandraMV1971_BaseColor.png
   normalTexturePath: common\textures\SquitwardHouse_DefaultMaterial_Normal.png
@@ -118,6 +118,12 @@ luaTest:
   _id: 170719644
   oaComponent:
     _entityID: 207831888
+  luaScriptPath: common\scripts\script.lua
+---
+luaTest:
+  _id: 170719640
+  oaComponent:
+    _entityID: 209146810
   luaScriptPath: common\scripts\script.lua
 ---
 luaTest:
@@ -156,6 +162,16 @@ oaMeshRenderer:
   castShadow: true
   light: 0
 ---
+oaMeshRenderer:
+  _id: 104264760
+  oaComponent:
+    _entityID: 209146810
+  material:
+    _id: 143285148
+  mesh: common\models\packman_open.obj
+  castShadow: true
+  light: 0
+---
 oaCamera:
   _id: 10626476
   oaComponent:
@@ -180,6 +196,21 @@ oaTransform:
   position: [3, 0, 3]
   rotation: [0, 0, 0, 1]
   scale: [0.2, 0.2, 0.2]
+---
+oaTransform:
+  _id: 222683080
+  oaComponent:
+    _entityID: 209146810
+  position: [0, 0, 0]
+  rotation: [0, 0, 0, 1]
+  scale: [1, 1, 1]
+---
+oaEntity:
+  _id: 209146810
+  _components:
+    - 170719640
+    - 222683080
+    - 104264760
 ---
 oaEntity:
   _id: 209146816

@@ -3,7 +3,6 @@
 #include "oaGraphics.h"
 #include <unordered_map>
 
-
 #define   OA_BUFFER_VERTEX 0
 #define   OA_BUFFER_NORMAL 1
 #define OA_BUFFER_TEXCOORD 2

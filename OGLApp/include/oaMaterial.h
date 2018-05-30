@@ -35,7 +35,10 @@ public:
 	void initialize();
 	GLuint getProgramID();
 
-	void bindUniformIDs();
+	void getUniformIDs();
+	void setUniformConstants();
+	void loadShader();
+	void loadTextures();
 	void setUniforms(glm::mat4* projectionMatrix, glm::mat4* viewMatrix, glm::mat4* modelMatrix, glm::vec3* eyePosition, oaLight* light);
 
 	oaMaterial(oaObject object);
