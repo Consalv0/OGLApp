@@ -109,7 +109,7 @@ void oaRendererManager::renderShadowMaps() {
 			for (auto& renderer : iterator.second) {
 				if (renderer->castShadow) {
 					glUniformMatrix4fv(lightSpaceID, 1, GL_FALSE, glm::value_ptr(light->getLightSpace()));
-					glUniformMatrix4fv(modelMatrixID, 1, GL_FALSE, &(renderer->transform()->getObjectSpace())[0][0]);
+					glUniformMatrix4fv(modelMatrixID, 1, GL_FALSE, &(renderer->transform()->SRT())[0][0]);
 					if (!renderer->mesh) return;
 					renderer->drawMesh();
 				}
@@ -134,8 +134,8 @@ void oaRendererManager::renderScene() {
 			for (auto& renderer : iterator.second) {
 				material->setUniforms(
 					&renderCamera->getProyection(),
-					&renderCamera->transform()->getObjectSpace(),
-					&renderer->getEntity()->transform()->getObjectSpace(),
+					&renderCamera->transform()->view(),
+					&renderer->getEntity()->transform()->SRT(),
 					&renderCamera->transform()->position,
 					&*renderer->light
 				);

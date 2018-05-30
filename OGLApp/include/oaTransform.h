@@ -25,7 +25,8 @@ public:
 	void lookAt(glm::vec3 target);
 	void rotate(const float& x, const float& y, const float& z);
 
-	glm::mat4 getObjectSpace();
+	glm::mat4 view();
+	glm::mat4 SRT();
 
 private:
 	std::shared_ptr<oaTransform> material;

@@ -70,14 +70,14 @@ float SchlickFresnelFuntion (float roughness, float NdotL, float NdotV, float Ld
     return mix(1, FresnelDiffuse90, FresnelLight) * mix(1, FresnelDiffuse90, FresnelView);
 }
 
-float ShadowCalculation(vec4 positionLS) {
+float ShadowCalculation(vec4 positionLS, float bias) {
   // perform perspective divide
   // This returns the fragment's light-space position in the range [-1,1].
   vec3 projCoords = positionLS.xyz / positionLS.w;
   // Now [0, 1]
   projCoords = projCoords * 0.5 + 0.5;
   float closestDepth = texture(_shadowTexture, projCoords.xy).r;
-  float currentDepth = projCoords.z - 0.0001;
+  float currentDepth = projCoords.z - bias;
    // check whether current frag pos is in shadow
   float shadow = step(currentDepth, closestDepth);
   
@@ -128,7 +128,7 @@ void main() {
   // float RdotV = max(0.0, dot( lightReflectDirection, eyeDirection   ));
 
   float attenuation = clamp(_LightRadius / (distance * distance), 0, 1);
-  attenuation *= ShadowCalculation(positionLightSpace);
+  attenuation *= ShadowCalculation(positionLightSpace, 0.0001);
   attenuation *= (-dot(_lightDirection * 2, lightDirection) - 1.4) * 6;
   attenuation = clamp(attenuation, 0, 1);
   vec3 difusse = NdotL * _LightColor * attenuation;

@@ -10,7 +10,6 @@ public:
 	float farPlane;
 
 	glm::mat4 getProyection();
-	glm::mat4 getView();
 
 	static std::shared_ptr<oaCamera> main();
 

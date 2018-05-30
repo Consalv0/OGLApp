@@ -120,7 +120,7 @@ void oaEngine::awakeEngine() {
 		
 		if (oaCamera::main() && locked) {
 			auto transform = oaCamera::main()->transform();
-			transform->rotate(mouseSensitivity * (float)mouseY, mouseSensitivity * (float)mouseX, 0);
+			transform->rotate(mouseSensitivity * (float)mouseY, mouseSensitivity * -(float)mouseX, 0);
 
 			if (glfwGetKey(oaEngine::getWindowHandle(), GLFW_KEY_W) == GLFW_PRESS) {
 				transform->position += transform->forward() * mouseSensitivity;

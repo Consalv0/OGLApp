@@ -16,6 +16,8 @@ public:
 	virtual void registerMethods();
 
 	void movePosition(float x, float y, float z);
+	void moveForward(float value);
+	void moveRight(float value);
 	void setPosition(float x, float y, float z);
 	void rotate(float x, float y, float z);
 	std::tuple<float, float, float> getPosition();

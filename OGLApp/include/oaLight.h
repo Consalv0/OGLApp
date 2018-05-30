@@ -20,7 +20,6 @@ public:
 
 	glm::mat4 getLightSpace();
 	glm::mat4 getProyection();
-	glm::mat4 getView();
 	glm::mat4 getMVPMatrix();
 	void createRenderTarget();
 

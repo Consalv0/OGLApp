@@ -21,14 +21,6 @@ glm::mat4 oaCamera::getProyection() {
 	);
 }
 
-glm::mat4 oaCamera::getView() {
-	return glm::lookAt(
-		transform()->position,   // Camera position
-		transform()->forward() + transform()->position,	// Look position
-		glm::vec3(0, 1, 0)       // Up vector
-	);
-}
-
 std::shared_ptr<oaCamera> oaCamera::main() {
 	if (_main) {
 		return _main;

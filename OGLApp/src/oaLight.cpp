@@ -15,7 +15,8 @@ glm::mat4 oaLight::getLightSpace() {
 		0.0, 0.0, 0.5, 0.0,
 		0.5, 0.5, 0.5, 1.0
 	);
-	return getProyection() * getView();
+
+	return getProyection() * transform()->view();
 }
 
 glm::mat4 oaLight::getProyection() {
@@ -24,14 +25,6 @@ glm::mat4 oaLight::getProyection() {
 		1.F, 	                      // Aspect ratio
 		0.1F,												// Near plane
 		100.F												// Far plane
-	);
-}
-
-glm::mat4 oaLight::getView() {
-	return glm::lookAt(
-		transform()->position,   // Camera position
-		transform()->position + transform()->forward(),	     // Look position
-		glm::vec3(0, 1, 0)       // Up vector
 	);
 }
 

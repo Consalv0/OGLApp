@@ -31,6 +31,8 @@ void luaTest::registerMethods() {
 	oaLuaBehavior::registerMethods();
 
 	luaState.set_function("_movePosition", &luaTest::movePosition, this);
+	luaState.set_function("_moveForward", &luaTest::moveForward, this);
+	luaState.set_function("_moveRight", &luaTest::moveRight, this);
 	luaState.set_function("_setPosition", &luaTest::setPosition, this);
 	luaState.set_function("_getPosition", &luaTest::getPosition, this);
 	luaState.set_function("_rotate", &luaTest::rotate, this);
@@ -45,6 +47,14 @@ void luaTest::registerMethods() {
 
 void luaTest::movePosition(float x, float y, float z) {
 	transform()->position += glm::vec3(x, y ,z);
+}
+
+void luaTest::moveForward(float value) {
+	transform()->position += transform()->forward() * value;
+}
+
+void luaTest::moveRight(float value) {
+	transform()->position += transform()->right() * value;
 }
 
 void luaTest::setPosition(float x, float y, float z) {
