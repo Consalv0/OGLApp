@@ -316,6 +316,32 @@ GLuint oaMeshLoader::loadDAE(
 	doc.parse<0>(fileXml.data());    // 0 means default parse flags
 
 	xml_node<> *collada = doc.first_node("COLLADA");
+	xml_node<> *up_axis = collada->first_node("asset")->first_node("up_axis");
+	glm::mat3 orientation;
+	if (up_axis) {
+		if (strcmp(up_axis->value(), "Z_UP") == 0) {
+			orientation = {
+				1, 0, 0,
+				0, 0, 1,
+				0, -1, 0,
+			};
+		}
+		else if (strcmp(up_axis->value(), "Y_UP") == 0) {
+			orientation = {
+				1, 0, 0,
+				0, 1, 0,
+				0, 0, 1,
+			};
+		}
+		else if (strcmp(up_axis->value(), "X_UP") == 0) {
+			orientation = {
+				0, -1, 0,
+				1, 0, 0,
+				0, 0, 1,
+			};
+		}
+	}
+
 	xml_node<> *library_geometries = collada->first_node("library_geometries");
 	xml_node<> *mesh = library_geometries->first_node("geometry")->first_node("mesh");
 	xml_node<> *source = mesh->first_node("source");
@@ -334,6 +360,7 @@ GLuint oaMeshLoader::loadDAE(
 				position.y = (float)atof(s.c_str());
 				s.clear(); iss >> s;
 				position.z = (float)atof(s.c_str());
+				position = position * orientation;
 				temp_positions.push_back(position);
 			}
 		}
@@ -348,6 +375,7 @@ GLuint oaMeshLoader::loadDAE(
 				normal.y = (float)atof(s.c_str());
 				s.clear(); iss >> s;
 				normal.z = (float)atof(s.c_str());
+				normal = normal * orientation;
 				temp_normals.push_back(normal);
 			}
 		}
