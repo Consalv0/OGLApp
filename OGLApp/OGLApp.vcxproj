@@ -304,6 +304,10 @@
     <ClInclude Include="include\oaTime.h" />
     <ClInclude Include="include\oaBehavior.h" />
     <ClInclude Include="include\oaTransform.h" />
+    <ClInclude Include="include\rapidxml\rapidxml.hpp" />
+    <ClInclude Include="include\rapidxml\rapidxml_iterators.hpp" />
+    <ClInclude Include="include\rapidxml\rapidxml_print.hpp" />
+    <ClInclude Include="include\rapidxml\rapidxml_utils.hpp" />
     <ClInclude Include="include\Sol\sol.hpp" />
     <ClInclude Include="include\Sol\sol_forward.hpp" />
     <ClInclude Include="include\oaMeshRenderer.h" />

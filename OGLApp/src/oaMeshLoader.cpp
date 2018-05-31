@@ -2,6 +2,10 @@
 #include "oaMesh.h"
 #include "oaLoaderUtils.h"
 #include <math.h>
+#include "rapidxml\rapidxml.hpp"
+#include "rapidxml\rapidxml_iterators.hpp"
+#include "rapidxml\rapidxml_print.hpp"
+#include "rapidxml\rapidxml_utils.hpp"
 
 std::unordered_map<std::string, oaMesh> oaMeshLoader::meshVaoIDs = std::unordered_map<std::string, oaMesh>();
 
@@ -74,11 +78,27 @@ oaMesh* oaMeshLoader::loadMesh(const char * filePath) {
 		return &meshVaoIDs.at(filePath);
 	}
 
+	std::string fileExt = oaGetFileExtension(filePath);
 	oaMesh mesh;
 
-	mesh.VAO = loadOBJ(
-		filePath, mesh.vertex_size, mesh.vertices
-	);
+	// OBJ parser
+	if (fileExt == "obj") {
+
+		mesh.VAO = loadOBJ(
+			filePath, mesh.vertex_size, mesh.vertices
+		);
+
+	// Collada parser
+	} else if (fileExt == "dae") {
+
+		mesh.VAO = loadDAE(
+			filePath, mesh.vertex_size, mesh.vertices
+		);
+
+	} else {
+		printf("File extension no supported: '%s'", fileExt.c_str());
+		return NULL;
+	}
 
 	if (mesh.VAO == NULL) {
 		printf("Unable to load '%s'\n", filePath);
@@ -91,17 +111,67 @@ oaMesh* oaMeshLoader::loadMesh(const char * filePath) {
 	return &meshVaoIDs.find(filePath)->second;
 }
 
+GLuint oaMeshLoader::bindData(
+	size_t & vertex_size,
+	oaVertex *& vertices_data
+) {
+	GLuint mesh_VAO = NULL; GLuint mesh_VBO[6];
+
+
+	// Generate vertex array object
+	glGenVertexArrays(1, &mesh_VAO);
+	glBindVertexArray(mesh_VAO);
+
+	// Generate buffer
+	glGenBuffers(1, &mesh_VBO[0]);
+
+	// Put the resulting identifier as GL_ARRAY_BUFFER
+	glBindBuffer(GL_ARRAY_BUFFER, mesh_VBO[OA_BUFFER_VERTEX]);
+	// Set our vertices to mesh_VBO[OA_BUFFER_VERTEX]
+	glBufferData(GL_ARRAY_BUFFER, vertex_size * sizeof(oaVertex), *&vertices_data, GL_STATIC_DRAW);
+
+	// Set Vertex Attributes to Vertex Array Object?
+	glVertexAttribPointer(OA_LOCATION_VERTEX, 3, GL_FLOAT, GL_FALSE,
+		sizeof(oaVertex), (GLvoid*)(offsetof(oaVertex, position)));
+	glEnableVertexAttribArray(OA_LOCATION_VERTEX);
+
+	glVertexAttribPointer(OA_LOCATION_NORMAL, 3, GL_FLOAT, GL_FALSE,
+		sizeof(oaVertex), (GLvoid*)(offsetof(oaVertex, normal)));
+	glEnableVertexAttribArray(OA_LOCATION_NORMAL);
+
+	glVertexAttribPointer(OA_LOCATION_TEXCOORD, 2, GL_FLOAT, GL_FALSE,
+		sizeof(oaVertex), (GLvoid*)(offsetof(oaVertex, texCoord)));
+	glEnableVertexAttribArray(OA_LOCATION_TEXCOORD);
+
+	glVertexAttribPointer(OA_LOCATION_TANGENT, 3, GL_FLOAT, GL_FALSE,
+		sizeof(oaVertex), (GLvoid*)(offsetof(oaVertex, tangent)));
+	glEnableVertexAttribArray(OA_LOCATION_TANGENT);
+
+	glVertexAttribIPointer(OA_LOCATION_JOINTIDS, 4, GL_INT,
+		sizeof(oaVertex), (GLvoid*)(offsetof(oaVertex, jointIDs)));
+	glEnableVertexAttribArray(OA_LOCATION_JOINTIDS);
+
+	glVertexAttribPointer(OA_LOCATION_WEIGHTS, 4, GL_FLOAT, GL_FALSE,
+		sizeof(oaVertex), (GLvoid*)(offsetof(oaVertex, weights)));
+	glEnableVertexAttribArray(OA_LOCATION_WEIGHTS);
+
+
+	// Clear the buffer
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	return mesh_VAO;
+}
+
 GLuint oaMeshLoader::loadOBJ(
 	const char * filePath,
 	size_t & vertex_size,
 	oaVertex *& vertices_data)
 {
-	std::vector<unsigned int> vertexIndices, uvIndices, normalIndices;
-	std::vector<glm::vec3> temp_vertices;
+	std::vector<unsigned int> positionIndices, uvIndices, normalIndices;
+	std::vector<glm::vec3> temp_positions;
 	std::vector<glm::vec2> temp_uvs;
 	std::vector<glm::vec3> temp_normals;
 	FILE *file;
-	GLuint mesh_VAO = NULL; GLuint mesh_VBO[6];
 
 	errno_t err = fopen_s(&file, filePath, "rb");
 	if (err)
@@ -121,7 +191,7 @@ GLuint oaMeshLoader::loadOBJ(
 		if (strcmp(lineHeader, "v") == 0) {
 			glm::vec3 vertex;
 			fscanf(file, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z);
-			temp_vertices.push_back(vertex);
+			temp_positions.push_back(vertex);
 
 		// “vt”, then the rest has to be 2 floats, so create
 		// a glm::vec2 and add it to the vector.
@@ -166,12 +236,12 @@ GLuint oaMeshLoader::loadOBJ(
 
 			if (matches != 9) {
 				printf("File can't be read by our simple parser : ( Try exporting with other options\n");
-				return false;
+				return NULL;
 			}
 
-			vertexIndices.push_back(vertexIndex[0]);
-			vertexIndices.push_back(vertexIndex[1]);
-			vertexIndices.push_back(vertexIndex[2]);
+			positionIndices.push_back(vertexIndex[0]);
+			positionIndices.push_back(vertexIndex[1]);
+			positionIndices.push_back(vertexIndex[2]);
 			uvIndices.push_back(uvIndex[0]);
 			uvIndices.push_back(uvIndex[1]);
 			uvIndices.push_back(uvIndex[2]);
@@ -184,20 +254,20 @@ GLuint oaMeshLoader::loadOBJ(
 	// Close file
 	fclose(file);
 
-	vertex_size = vertexIndices.size();
+	vertex_size = positionIndices.size();
 	*&vertices_data = new oaVertex[vertex_size];
 
-	// For each vertex of each triangle
+	// For each vertex
 	for (unsigned int i = 0; i < vertex_size; i++) {
 
 		// the index to the vertex position is vertexIndices[i] :
-		unsigned int vertexIndex = vertexIndices[i];
+		unsigned int vertexIndex = positionIndices[i];
 		unsigned int normalIndex = normalIndices[i];
 		unsigned int uvIndex = uvIndices[i];
 
 		// so the position is temp_vertices[vertexIndex - 1]
 		// (there is a - 1 because C++ indexing starts at 0 and OBJ indexing starts at 1, remember ? ) :
-		glm::vec3 vertex = temp_vertices[vertexIndex - 1];
+		glm::vec3 vertex = temp_positions[vertexIndex - 1];
 		glm::vec3 normal = temp_normals[normalIndex - 1];
 		glm::vec2 uv = temp_uvs[uvIndex - 1];
 
@@ -217,49 +287,150 @@ GLuint oaMeshLoader::loadOBJ(
 
 	computeTangentBasis(vertex_size, *&vertices_data);
 
-	auto temp = std::vector<oaVertex>();
-	temp.insert(temp.end(), &vertices_data[0], &vertices_data[vertex_size -1]);
+	return bindData(vertex_size, vertices_data);
+}
 
-	// Generate vertex array object
-	glGenVertexArrays(1, &mesh_VAO);
-	glBindVertexArray(mesh_VAO);
+GLuint oaMeshLoader::loadDAE(
+	const char * filePath,
+	size_t & vertex_size,
+	oaVertex *& vertices_data
+) {
+	using namespace rapidxml;
 
-	// Generate buffer
-	glGenBuffers(1, &mesh_VBO[0]);
+	std::vector<unsigned int> positionIndices, uvIndices, normalIndices;
+	std::vector<glm::vec3> temp_positions;
+	std::vector<glm::vec2> temp_uvs;
+	std::vector<glm::vec3> temp_normals;
+	GLuint mesh_VAO = NULL; GLuint mesh_VBO[6];
+	xml_document<> doc;
 
-	// Put the resulting identifier as GL_ARRAY_BUFFER
-	glBindBuffer(GL_ARRAY_BUFFER, mesh_VBO[OA_BUFFER_VERTEX]);
-	// Set our vertices to mesh_VBO[OA_BUFFER_VERTEX]
-	glBufferData(GL_ARRAY_BUFFER, vertex_size * sizeof(oaVertex), *&vertices_data, GL_STATIC_DRAW);
+	//std::ifstream in;
+	//in.open(filePath);
+	//if (!in) {
+	//	printf("There was an error reading: '&s'", filePath);
+	//	return NULL;
+	//}
+	//char *text;
+	//in >> text;
 
-	// Set Vertex Attributes to Vertex Array Object?
-	glVertexAttribPointer(OA_LOCATION_VERTEX, 3, GL_FLOAT, GL_FALSE,
-		sizeof(oaVertex), (GLvoid*)(offsetof(oaVertex, position)));
-	glEnableVertexAttribArray(OA_LOCATION_VERTEX);
+	file<> fileXml(filePath);
+	doc.parse<0>(fileXml.data());    // 0 means default parse flags
 
-	glVertexAttribPointer(OA_LOCATION_NORMAL, 3, GL_FLOAT, GL_FALSE,
-		sizeof(oaVertex), (GLvoid*)(offsetof(oaVertex, normal)));
-	glEnableVertexAttribArray(OA_LOCATION_NORMAL);
+	xml_node<> *collada = doc.first_node("COLLADA");
+	xml_node<> *library_geometries = collada->first_node("library_geometries");
+	xml_node<> *mesh = library_geometries->first_node("geometry")->first_node("mesh");
+	xml_node<> *source = mesh->first_node("source");
 
-	glVertexAttribPointer(OA_LOCATION_TEXCOORD, 2, GL_FLOAT, GL_FALSE,
-		sizeof(oaVertex), (GLvoid*)(offsetof(oaVertex, texCoord)));
-	glEnableVertexAttribArray(OA_LOCATION_TEXCOORD);
+	while (source) {
+		char* type = source->first_attribute()->value();
 
-	glVertexAttribPointer(OA_LOCATION_TANGENT, 3, GL_FLOAT, GL_FALSE,
-		sizeof(oaVertex), (GLvoid*)(offsetof(oaVertex, tangent)));
-	glEnableVertexAttribArray(OA_LOCATION_TANGENT);
+		if (oaEndsWidth("mesh-positions", type)) {
+			xml_node<> *farray = source->first_node("float_array");
+			
+			glm::vec3 position;
+			std::istringstream iss(farray->value());
+			for (std::string s; iss >> s; ) {
+				position.x = atof(s.c_str());
+				s.clear(); iss >> s;
+				position.y = atof(s.c_str());
+				s.clear(); iss >> s;
+				position.z = atof(s.c_str());
+				temp_positions.push_back(position);
+			}
+		}
+		if (oaEndsWidth("mesh-normals", type)) {
+			xml_node<> *farray = source->first_node("float_array");
 
-	glVertexAttribIPointer(OA_LOCATION_JOINTIDS, 4, GL_INT,
-		sizeof(oaVertex), (GLvoid*)(offsetof(oaVertex, jointIDs)));
-	glEnableVertexAttribArray(OA_LOCATION_JOINTIDS);
+			glm::vec3 normal;
+			std::istringstream iss(farray->value());
+			for (std::string s; iss >> s; ) {
+				normal.x = atof(s.c_str());
+				s.clear(); iss >> s;
+				normal.y = atof(s.c_str());
+				s.clear(); iss >> s;
+				normal.z = atof(s.c_str());
+				temp_normals.push_back(normal);
+			}
+		}
 
-	glVertexAttribPointer(OA_LOCATION_WEIGHTS, 4, GL_FLOAT, GL_FALSE,
-		sizeof(oaVertex), (GLvoid*)(offsetof(oaVertex, weights)));
-	glEnableVertexAttribArray(OA_LOCATION_WEIGHTS);
+		if (oaEndsWidth("mesh-map-0", type)) {
+			xml_node<> *farray = source->first_node("float_array");
 
+			glm::vec3 uv;
+			std::istringstream iss(farray->value());
+			for (std::string s; iss >> s; ) {
+				uv.x = atof(s.c_str());
+				s.clear(); iss >> s;
+				uv.y = atof(s.c_str());
+				temp_uvs.push_back(uv);
+			}
+		}
 
-	// Clear the buffer
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+		if (strcmp(source->name(), "triangles") == 0) {
+			xml_node<> *input = source->first_node("input");
+			int vertexOff = 0, normalOff = 0, texCoordOff = 0;
 
-	return mesh_VAO;
+			while(input) {
+				if (xml_attribute<> *attr = input->first_attribute("semantic")) {
+					     if (strcmp(attr->value(), "VERTEX") == 0)   { vertexOff = atoi(input->first_attribute("offset")->value()); }
+					else if (strcmp(attr->value(), "NORMAL") == 0)   { normalOff = atoi(input->first_attribute("offset")->value()); }
+					else if (strcmp(attr->value(), "TEXCOORD") == 0) { texCoordOff = atoi(input->first_attribute("offset")->value()); }
+				}
+
+				input = input->next_sibling();
+			}
+
+			xml_node<> *vertex = source->first_node("p");
+
+			std::istringstream iss(vertex->value());
+			for (std::string s; iss >> s; ) {
+				unsigned int vertexIndex[3];
+				vertexIndex[0] = atoi(s.c_str());
+				iss >> s;
+				vertexIndex[1] = atoi(s.c_str());
+				iss >> s;
+				vertexIndex[2] = atoi(s.c_str());
+
+				positionIndices.push_back(vertexIndex[vertexOff]);
+				normalIndices.push_back(vertexIndex[normalOff]);
+				uvIndices.push_back(vertexIndex[texCoordOff]);
+			}
+		}
+
+		source = source->next_sibling();
+	}
+
+	vertex_size = positionIndices.size();
+	*&vertices_data = new oaVertex[vertex_size];
+
+	// For each vertex
+	for (unsigned int i = 0; i < vertex_size; i++) {
+
+		// the index to the vertex position is vertexIndices[i] :
+		unsigned int vertexIndex = positionIndices[i];
+		unsigned int normalIndex = normalIndices[i];
+		unsigned int uvIndex = uvIndices[i];
+
+		// get the index
+		glm::vec3 vertex = temp_positions[vertexIndex];
+		glm::vec3 normal = temp_normals[normalIndex];
+		glm::vec2 uv = temp_uvs[uvIndex];
+
+		// And this makes the position of our new vertex
+		vertices_data[i].position[0] = vertex.x;
+		vertices_data[i].position[1] = vertex.y;
+		vertices_data[i].position[2] = vertex.z;
+
+		// Normals
+		vertices_data[i].normal[0] = normal.x;
+		vertices_data[i].normal[1] = normal.y;
+		vertices_data[i].normal[2] = normal.z;
+		//UVs
+		vertices_data[i].texCoord[0] = uv.x;
+		vertices_data[i].texCoord[1] = uv.y;
+	}
+
+	computeTangentBasis(vertex_size, *&vertices_data);
+
+	return bindData(vertex_size, vertices_data);
 }

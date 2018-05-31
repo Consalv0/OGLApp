@@ -1,8 +1,9 @@
 #pragma once
 
 #include "oaMain.h"
+#include <fstream>
 
-size_t oaFindExtIdx(const char* fileName) {
+static std::string oaGetFileExtension(const char* fileName) {
 	size_t len = strlen(fileName);
 	size_t idx = len - 1;
 	for (size_t i = 0; *(fileName + i); i++) {
@@ -12,9 +13,17 @@ size_t oaFindExtIdx(const char* fileName) {
 			idx = len - 1;
 		}
 	}
-	return idx + 1;
+
+	idx += 1;
+
+	return std::string(fileName).substr(idx);
 }
 
-std::string getFileExt(const char* fileName) {
-	return std::string(fileName).substr(oaFindExtIdx(fileName));
+static int oaEndsWidth(const char* withwhat, const char* what) {
+	int l1 = strlen(withwhat);
+	int l2 = strlen(what);
+	if (l1 > l2)
+		return 0;
+
+	return strcmp(withwhat, what + (l2 - l1)) == 0;
 }

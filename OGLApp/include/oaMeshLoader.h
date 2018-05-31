@@ -21,7 +21,18 @@ public:
 
 private:
 	friend class oaMesh;
+	static GLuint bindData(
+		size_t& vertex_size,
+		oaVertex*&vertex_data
+	);
+
 	static GLuint loadOBJ(
+		const char *filePath,
+		size_t& vertex_size,
+		oaVertex *&vertex_data
+	);
+
+	static GLuint loadDAE(
 		const char *filePath,
 		size_t& vertex_size,
 		oaVertex *&vertex_data

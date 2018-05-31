@@ -1,4 +1,5 @@
 #include "oaImageLoader.h"
+#include "oaLoaderUtils.h"
 #include <libpng\png.h>
 
 std::unordered_map<std::string, GLuint> oaImageLoader::imagesIDs = std::unordered_map<std::string, GLuint>();
@@ -7,6 +8,8 @@ GLuint oaImageLoader::loadImage(std::string & filePath, size_t & outWidth, size_
 	if (filePath.empty()) {
 		return NULL;
 	}
+
+	std::string fileExt = oaGetFileExtension(filePath.c_str());
 
 	if (imagesIDs.find(filePath) != imagesIDs.end()) {
 		return imagesIDs.at(filePath);
@@ -29,6 +32,11 @@ GLuint oaImageLoader::loadImage(std::string & filePath, size_t & outWidth, size_
 
 		imagesIDs.insert({ filePath, whiteTextureID });
 		return whiteTextureID;
+	}
+
+	if (fileExt != "png") {
+		printf("File extension no supported: '%s'", fileExt.c_str());
+		return NULL;
 	}
 
 	GLuint textureDataID = loadPNG24(filePath.c_str(), outWidth, outHeight);

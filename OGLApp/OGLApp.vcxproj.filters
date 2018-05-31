@@ -64,6 +64,9 @@
     <Filter Include="include\SOL">
       <UniqueIdentifier>{cc6e8645-3007-4eb7-9bfb-42aea36709ae}</UniqueIdentifier>
     </Filter>
+    <Filter Include="include\RapidXML">
+      <UniqueIdentifier>{5201e230-f538-442b-abfe-77d6c638d1a9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="include\oaMain.h">
@@ -709,6 +712,18 @@
     </ClInclude>
     <ClInclude Include="include\oaLoaderUtils.h">
       <Filter>include\OGLApp</Filter>
+    </ClInclude>
+    <ClInclude Include="include\rapidxml\rapidxml.hpp">
+      <Filter>include\RapidXML</Filter>
+    </ClInclude>
+    <ClInclude Include="include\rapidxml\rapidxml_iterators.hpp">
+      <Filter>include\RapidXML</Filter>
+    </ClInclude>
+    <ClInclude Include="include\rapidxml\rapidxml_print.hpp">
+      <Filter>include\RapidXML</Filter>
+    </ClInclude>
+    <ClInclude Include="include\rapidxml\rapidxml_utils.hpp">
+      <Filter>include\RapidXML</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
