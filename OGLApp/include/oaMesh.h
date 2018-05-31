@@ -11,10 +11,14 @@
 #define oaVertex_H
 
 typedef struct oaVertex {
-	GLfloat position[3];
-	GLfloat normal[3];
-	GLfloat texCoord[2];
-	GLfloat tangent[3];
+	GLfloat position[3] = {0};
+	GLfloat normal[3] = {0};
+	GLfloat texCoord[2] = {0};
+	GLfloat tangent[3] = {0};
+
+	// Animation
+	GLint jointIDs[4] = {0};
+	GLfloat weights[4] = {0};
 } oaVertex;
 
 #endif // !1

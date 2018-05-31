@@ -3,10 +3,11 @@
 
 uniform vec4 _Color;
 uniform vec3 _SpecularColor;
+uniform vec3 _AmbientColor;
+
 uniform vec3 _LightColor;
 uniform vec3 _lightDirection;
 uniform float _LightRadius;
-uniform vec3 _AmbientColor;
 
 uniform mat4 _projectionMatrix;
 uniform mat4 _viewMatrix;
@@ -106,11 +107,11 @@ void main() {
   // vec3 lightReflectDirection = reflect( -lightDirection.xyz, normal );
 
   // vec3 eyeReflectDirection = normalize(reflect( -eyeDirection, normal ));
-  vec3 halfDirection = normalize(eyeDirection + lightDirection);
+  vec3 halfDirection = normalize(eyeDirection + lightDirection); 
 
   float roughness = _Roughness * texture(_roughnessTexture, uv).r;
-  float metalness = _Metallic * texture(_metallicTexture, uv).r;
-  
+  float metalness = (_Metallic * texture(_metallicTexture, uv).r);
+
   roughness = roughness * roughness;
   
   vec3 diffuseColor = _Color.rgb * (1 - metalness);
@@ -131,7 +132,8 @@ void main() {
   attenuation *= ShadowCalculation(positionLightSpace, 0.0001);
   attenuation *= (-dot(_lightDirection * 2, lightDirection) - 1.4) * 6;
   attenuation = clamp(attenuation, 0, 1);
-  vec3 difusse = NdotL * _LightColor * attenuation;
+  vec3 difusse = vec3(NdotL * attenuation);
+  difusse = step(0.5, length(difusse)) * _LightColor;
 
   vec3 SpecularDistribution = _LightColor * specularColor * attenuation;
   SpecularDistribution *= max(TrowbridgeReitzNormalDistribution(roughness, NdotH), 0.0);
@@ -141,9 +143,10 @@ void main() {
   float Fresnel = max(SchlickFresnelFuntion(roughness, NdotL, NdotV, LdotH), 0.0);
 
   vec3 specularity = (SpecularDistribution * Fresnel * GeometricShadow) / (4 * ( NdotL * NdotV ));
-  
+  specularity = step(0.5, length(specularity)) * SpecularDistribution;
+
   out_Color = vec4(difusse * diffuseColor + _AmbientColor * diffuseColor, 1);
-  out_Color += vec4(max( specularity * NdotV, 0 ), 1); // * NdotL, 0);
+  out_Color += vec4(max( specularity * NdotV, 0 ), 0); // * NdotL, 0);
   // out_Color = vec4(1) * 1 - smoothstep(0, 12, length(vertPosition - eyePosition));
   // out_Color = vec4(normalColor + max(specularity * NdotV, 0), 1);
   // out_Color = vec4((1 - tangentDirection) * 0.5, 1);

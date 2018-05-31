@@ -135,7 +135,7 @@ void main() {
   vec3 difusse = NdotL * _LightColor * attenuation;
   difusse *= step(0.5, length(difusse));
 
-  vec3 SpecularDistribution = specularColor * attenuation;
+  vec3 SpecularDistribution = _LightColor * specularColor * attenuation;
   SpecularDistribution *= max(TrowbridgeReitzNormalDistribution(roughness, NdotH), 0.0);
 
   float GeometricShadow = max(ModifiedKelemenGeometricShadowingFunction(roughness, NdotV, NdotL), 0.0);

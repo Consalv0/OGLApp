@@ -249,6 +249,14 @@ GLuint oaMeshLoader::loadOBJ(
 		sizeof(oaVertex), (GLvoid*)(offsetof(oaVertex, tangent)));
 	glEnableVertexAttribArray(OA_LOCATION_TANGENT);
 
+	glVertexAttribIPointer(OA_LOCATION_JOINTIDS, 4, GL_INT,
+		sizeof(oaVertex), (GLvoid*)(offsetof(oaVertex, jointIDs)));
+	glEnableVertexAttribArray(OA_LOCATION_JOINTIDS);
+
+	glVertexAttribPointer(OA_LOCATION_WEIGHTS, 4, GL_FLOAT, GL_FALSE,
+		sizeof(oaVertex), (GLvoid*)(offsetof(oaVertex, weights)));
+	glEnableVertexAttribArray(OA_LOCATION_WEIGHTS);
+
 
 	// Clear the buffer
 	glBindBuffer(GL_ARRAY_BUFFER, 0);

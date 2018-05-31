@@ -24,6 +24,8 @@
 #define OA_LOCATION_NORMAL 1
 #define OA_LOCATION_TEXCOORD 2
 #define OA_LOCATION_TANGENT 3
+#define OA_LOCATION_JOINTIDS 4
+#define OA_LOCATION_WEIGHTS 5
 
 bool oaCreateWindow(GLFWwindow **outWindow, const char *appName, const int windowMode, size_t &width, size_t &height);
 void oaInitializeInputs(GLFWwindow **window);

@@ -3,7 +3,7 @@ local i = _getLightIntensity()
 
 if (y > 4) then
   _setPosition(3, 0, 3)
-  _setLightIntensity(0.5)
+  _setLightIntensity(0)
   _castShadows(true)
 else
   _movePosition(-0.001, 0.001, -0.001)
