@@ -301,7 +301,6 @@ GLuint oaMeshLoader::loadDAE(
 	std::vector<glm::vec3> temp_positions;
 	std::vector<glm::vec2> temp_uvs;
 	std::vector<glm::vec3> temp_normals;
-	GLuint mesh_VAO = NULL; GLuint mesh_VBO[6];
 	xml_document<> doc;
 
 	//std::ifstream in;
@@ -330,11 +329,11 @@ GLuint oaMeshLoader::loadDAE(
 			glm::vec3 position;
 			std::istringstream iss(farray->value());
 			for (std::string s; iss >> s; ) {
-				position.x = atof(s.c_str());
+				position.x = (float)atof(s.c_str());
 				s.clear(); iss >> s;
-				position.y = atof(s.c_str());
+				position.y = (float)atof(s.c_str());
 				s.clear(); iss >> s;
-				position.z = atof(s.c_str());
+				position.z = (float)atof(s.c_str());
 				temp_positions.push_back(position);
 			}
 		}
@@ -344,11 +343,11 @@ GLuint oaMeshLoader::loadDAE(
 			glm::vec3 normal;
 			std::istringstream iss(farray->value());
 			for (std::string s; iss >> s; ) {
-				normal.x = atof(s.c_str());
+				normal.x = (float)atof(s.c_str());
 				s.clear(); iss >> s;
-				normal.y = atof(s.c_str());
+				normal.y = (float)atof(s.c_str());
 				s.clear(); iss >> s;
-				normal.z = atof(s.c_str());
+				normal.z = (float)atof(s.c_str());
 				temp_normals.push_back(normal);
 			}
 		}
@@ -359,9 +358,9 @@ GLuint oaMeshLoader::loadDAE(
 			glm::vec3 uv;
 			std::istringstream iss(farray->value());
 			for (std::string s; iss >> s; ) {
-				uv.x = atof(s.c_str());
+				uv.x = (float)atof(s.c_str());
 				s.clear(); iss >> s;
-				uv.y = atof(s.c_str());
+				uv.y = (float)atof(s.c_str());
 				temp_uvs.push_back(uv);
 			}
 		}

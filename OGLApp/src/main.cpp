@@ -461,4 +461,6 @@ int oldMain() {
 
 	std::cout << "\nPress any key to close..." << std::endl;
 	_getch();
+
+	return 0;
 }
