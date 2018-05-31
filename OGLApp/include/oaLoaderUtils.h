@@ -27,3 +27,12 @@ static int oaEndsWidth(const char* withwhat, const char* what) {
 
 	return strcmp(withwhat, what + (l2 - l1)) == 0;
 }
+
+static int oaEndsWidth(const wchar_t* withwhat, const wchar_t* what) {
+	int l1 = wcslen(withwhat);
+	int l2 = wcslen(what);
+	if (l1 > l2)
+		return 0;
+
+	return wcscmp(withwhat, what + (l2 - l1)) == 0;
+}

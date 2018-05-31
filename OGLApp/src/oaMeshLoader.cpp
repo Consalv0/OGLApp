@@ -301,7 +301,7 @@ GLuint oaMeshLoader::loadDAE(
 	std::vector<glm::vec3> temp_positions;
 	std::vector<glm::vec2> temp_uvs;
 	std::vector<glm::vec3> temp_normals;
-	xml_document<> doc;
+	xml_document<wchar_t> doc;
 
 	//std::ifstream in;
 	//in.open(filePath);
@@ -312,28 +312,28 @@ GLuint oaMeshLoader::loadDAE(
 	//char *text;
 	//in >> text;
 
-	file<> fileXml(filePath);
+	file<wchar_t> fileXml(filePath);
 	doc.parse<0>(fileXml.data());    // 0 means default parse flags
 
-	xml_node<> *collada = doc.first_node("COLLADA");
-	xml_node<> *up_axis = collada->first_node("asset")->first_node("up_axis");
-	glm::mat3 orientation;
+	xml_node<wchar_t> *collada = doc.first_node(L"COLLADA");
+	xml_node<wchar_t> *up_axis = collada->first_node(L"asset")->first_node(L"up_axis");
+	glm::mat3 orientation = glm::mat3();
 	if (up_axis) {
-		if (strcmp(up_axis->value(), "Z_UP") == 0) {
+		if (wcscmp(up_axis->value(), L"Z_UP") == 0) {
 			orientation = {
 				1, 0, 0,
 				0, 0, 1,
 				0, -1, 0,
 			};
 		}
-		else if (strcmp(up_axis->value(), "Y_UP") == 0) {
+		else if (wcscmp(up_axis->value(), L"Y_UP") == 0) {
 			orientation = {
 				1, 0, 0,
 				0, 1, 0,
 				0, 0, 1,
 			};
 		}
-		else if (strcmp(up_axis->value(), "X_UP") == 0) {
+		else if (wcscmp(up_axis->value(), L"X_UP") == 0) {
 			orientation = {
 				0, -1, 0,
 				1, 0, 0,
@@ -342,81 +342,81 @@ GLuint oaMeshLoader::loadDAE(
 		}
 	}
 
-	xml_node<> *library_geometries = collada->first_node("library_geometries");
-	xml_node<> *mesh = library_geometries->first_node("geometry")->first_node("mesh");
-	xml_node<> *source = mesh->first_node("source");
+	xml_node<wchar_t> *library_geometries = collada->first_node(L"library_geometries");
+	xml_node<wchar_t> *mesh = library_geometries->first_node(L"geometry")->first_node(L"mesh");
+	xml_node<wchar_t> *source = mesh->first_node(L"source");
 
 	while (source) {
-		char* type = source->first_attribute()->value();
+		wchar_t* type = source->first_attribute()->value();
 
-		if (oaEndsWidth("mesh-positions", type)) {
-			xml_node<> *farray = source->first_node("float_array");
+		if (oaEndsWidth(L"mesh-positions", type)) {
+			xml_node<wchar_t> *farray = source->first_node(L"float_array");
 			
 			glm::vec3 position;
-			std::istringstream iss(farray->value());
-			for (std::string s; iss >> s; ) {
-				position.x = (float)atof(s.c_str());
+			std::wistringstream iss(farray->value());
+			for (std::wstring s; iss >> s; ) {
+				position.x = (float)_wtof(s.c_str());
 				s.clear(); iss >> s;
-				position.y = (float)atof(s.c_str());
+				position.y = (float)_wtof(s.c_str());
 				s.clear(); iss >> s;
-				position.z = (float)atof(s.c_str());
+				position.z = (float)_wtof(s.c_str());
 				position = position * orientation;
 				temp_positions.push_back(position);
 			}
 		}
-		if (oaEndsWidth("mesh-normals", type)) {
-			xml_node<> *farray = source->first_node("float_array");
+		if (oaEndsWidth(L"mesh-normals", type)) {
+			xml_node<wchar_t> *farray = source->first_node(L"float_array");
 
 			glm::vec3 normal;
-			std::istringstream iss(farray->value());
-			for (std::string s; iss >> s; ) {
-				normal.x = (float)atof(s.c_str());
+			std::wistringstream iss(farray->value());
+			for (std::wstring s; iss >> s; ) {
+				normal.x = (float)_wtof(s.c_str());
 				s.clear(); iss >> s;
-				normal.y = (float)atof(s.c_str());
+				normal.y = (float)_wtof(s.c_str());
 				s.clear(); iss >> s;
-				normal.z = (float)atof(s.c_str());
+				normal.z = (float)_wtof(s.c_str());
 				normal = normal * orientation;
 				temp_normals.push_back(normal);
 			}
 		}
 
-		if (oaEndsWidth("mesh-map-0", type)) {
-			xml_node<> *farray = source->first_node("float_array");
+		if (oaEndsWidth(L"mesh-map-0", type)) {
+			xml_node<wchar_t> *farray = source->first_node(L"float_array");
 
 			glm::vec3 uv;
-			std::istringstream iss(farray->value());
-			for (std::string s; iss >> s; ) {
-				uv.x = (float)atof(s.c_str());
+			std::wistringstream iss(farray->value());
+			for (std::wstring s; iss >> s; ) {
+				uv.x = (float)_wtof(s.c_str());
 				s.clear(); iss >> s;
-				uv.y = (float)atof(s.c_str());
+				uv.y = (float)_wtof(s.c_str());
 				temp_uvs.push_back(uv);
 			}
 		}
 
-		if (strcmp(source->name(), "triangles") == 0) {
-			xml_node<> *input = source->first_node("input");
+		if (wcscmp(source->name(), L"triangles") == 0) {
+			xml_node<wchar_t> *input = source->first_node(L"input");
 			int vertexOff = 0, normalOff = 0, texCoordOff = 0;
 
 			while(input) {
-				if (xml_attribute<> *attr = input->first_attribute("semantic")) {
-					     if (strcmp(attr->value(), "VERTEX") == 0)   { vertexOff = atoi(input->first_attribute("offset")->value()); }
-					else if (strcmp(attr->value(), "NORMAL") == 0)   { normalOff = atoi(input->first_attribute("offset")->value()); }
-					else if (strcmp(attr->value(), "TEXCOORD") == 0) { texCoordOff = atoi(input->first_attribute("offset")->value()); }
+				if (xml_attribute<wchar_t> *attr = input->first_attribute(L"semantic")) {
+					     if (wcscmp(attr->value(), L"VERTEX") == 0)   { vertexOff = _wtoi(input->first_attribute(L"offset")->value()); }
+					else if (wcscmp(attr->value(), L"NORMAL") == 0)   { normalOff = _wtoi(input->first_attribute(L"offset")->value()); }
+					else if (wcscmp(attr->value(), L"TEXCOORD") == 0) { texCoordOff = _wtoi(input->first_attribute(L"offset")->value()); }
 				}
 
 				input = input->next_sibling();
 			}
 
-			xml_node<> *vertex = source->first_node("p");
+			xml_node<wchar_t> *vertex = source->first_node(L"p");
 
-			std::istringstream iss(vertex->value());
-			for (std::string s; iss >> s; ) {
+			std::wistringstream iss(vertex->value());
+			for (std::wstring s; iss >> s; ) {
 				unsigned int vertexIndex[3];
-				vertexIndex[0] = atoi(s.c_str());
+				vertexIndex[0] = _wtoi(s.c_str());
 				iss >> s;
-				vertexIndex[1] = atoi(s.c_str());
+				vertexIndex[1] = _wtoi(s.c_str());
 				iss >> s;
-				vertexIndex[2] = atoi(s.c_str());
+				vertexIndex[2] = _wtoi(s.c_str());
 
 				positionIndices.push_back(vertexIndex[vertexOff]);
 				normalIndices.push_back(vertexIndex[normalOff]);
