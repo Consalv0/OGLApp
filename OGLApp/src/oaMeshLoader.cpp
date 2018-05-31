@@ -1,32 +1,31 @@
 #include "oaMeshLoader.h"
 #include "oaMesh.h"
+#include "oaLoaderUtils.h"
 #include <math.h>
 
 std::unordered_map<std::string, oaMesh> oaMeshLoader::meshVaoIDs = std::unordered_map<std::string, oaMesh>();
 
 void oaMeshLoader::computeTangentBasis(
 	const size_t & size,
-	GLfloat *& vertices,
-	GLfloat *& normals,
-	GLfloat *& uvs,
-	GLfloat *& tangents)
+	oaVertex *& vertices_data
+)
 {
 
-	glm::vec3 *tan1 = new glm::vec3[size / 3]{ glm::vec3() };
-	glm::vec3 *tan2 = new glm::vec3[size / 3]{ glm::vec3() };
+	glm::vec3 *tan1 = new glm::vec3[size]{ glm::vec3() };
+	glm::vec3 *tan2 = new glm::vec3[size]{ glm::vec3() };
 
 	// For each triangle, we compute the edge (deltaPos) and the deltaUV
-	for (size_t i = 0; i < size / 3; i += 3) {
+	for (size_t i = 0; i < size; i += 3) {
 
 		// Shortcuts for vertices
-		const glm::vec3 v0 = { vertices[i * 3 + 0 + 0], vertices[i * 3 + 1 + 0], vertices[i * 3 + 2 + 0] };
-		const glm::vec3 v1 = { vertices[i * 3 + 0 + 3], vertices[i * 3 + 1 + 3], vertices[i * 3 + 2 + 3] };
-		const glm::vec3 v2 = { vertices[i * 3 + 0 + 6], vertices[i * 3 + 1 + 6], vertices[i * 3 + 2 + 6] };
+		const glm::vec3 v0 = { vertices_data[i + 0].position[0], vertices_data[i + 0].position[1], vertices_data[i + 0].position[2] };
+		const glm::vec3 v1 = { vertices_data[i + 1].position[0], vertices_data[i + 1].position[1], vertices_data[i + 1].position[2] };
+		const glm::vec3 v2 = { vertices_data[i + 2].position[0], vertices_data[i + 2].position[1], vertices_data[i + 2].position[2] };
 
 		// Shortcuts for UVs
-		const glm::vec2 uv0 = { uvs[i * 2 + 0 + 0], uvs[i * 2 + 1 + 0] };
-		const glm::vec2 uv1 = { uvs[i * 2 + 0 + 2], uvs[i * 2 + 1 + 2] };
-		const glm::vec2 uv2 = { uvs[i * 2 + 0 + 4], uvs[i * 2 + 1 + 4] };
+		const glm::vec2 uv0 = { vertices_data[i + 0].texCoord[0], vertices_data[i + 0].texCoord[1] };
+		const glm::vec2 uv1 = { vertices_data[i + 1].texCoord[0], vertices_data[i + 1].texCoord[1] };
+		const glm::vec2 uv2 = { vertices_data[i + 2].texCoord[0], vertices_data[i + 2].texCoord[1] };
 
 		// Edges of the triangle : position delta
 		const glm::vec3 deltaPos1 = v1 - v0;
@@ -51,22 +50,19 @@ void oaMeshLoader::computeTangentBasis(
 		tan2[i / 3 + 2] = tdir;
 	}
 
-	for (size_t i = 0; i < size / 3; i++) {
+	for (size_t i = 0; i < size; i++) {
 		// Set the same tangent for all three vertices of the triangle.
 		const glm::vec4 t = glm::vec4(tan1[i], 1.0F);
 
 		// Orthogonalize
-		auto x = normals[i * 3 + 0];
-		auto y = normals[i * 3 + 1];
-		auto z = normals[i * 3 + 2];
-		glm::vec4 normal = { normals[i * 3 + 0], normals[i * 3 + 1], normals[i * 3 + 2], 1.0F };
+		glm::vec4 normal = { vertices_data[i + 0].normal[0], vertices_data[i + 1].normal[0], vertices_data[i + 2].normal[0], 1.0F };
 		glm::vec4 tangent = glm::normalize(t * glm::dot(normal, t));
 		tangent = std::isfinite(tangent.x) && std::isfinite(tangent.x) && std::isfinite(tangent.x) ? tangent : glm::vec4();
 
 		// Handedness
 		tangent.w = glm::normalize(glm::dot(glm::cross(glm::vec3(normal), glm::vec3(t)), tan2[i])) < 0.0F ? 1.F : -1.F;
 
-		tangents[i * 3 + 0] = tangent.x; tangents[i * 3 + 1] = tangent.y; tangents[i * 3 + 2] = tangent.z;
+		vertices_data[i].tangent[0] = tangent.x; vertices_data[i].tangent[1] = tangent.y; vertices_data[i].tangent[2] = tangent.z;
 
 		// Same thing for binormals
 		// binormals[i * 3 + 0] = tan2[i].x; binormals[i * 3 + 1] = tan2[i].y; binormals[i * 3 + 2] = tan2[i].z;
@@ -81,10 +77,7 @@ oaMesh* oaMeshLoader::loadMesh(const char * filePath) {
 	oaMesh mesh;
 
 	mesh.VAO = loadOBJ(
-		filePath,
-		mesh.vertex_size, mesh.vertex_data,
-		mesh.normal_data, mesh.texCoord_data,
-		mesh.tangent_data
+		filePath, mesh.vertex_size, mesh.vertices
 	);
 
 	if (mesh.VAO == NULL) {
@@ -101,10 +94,7 @@ oaMesh* oaMeshLoader::loadMesh(const char * filePath) {
 GLuint oaMeshLoader::loadOBJ(
 	const char * filePath,
 	size_t & vertex_size,
-	GLfloat *& vertex_data,
-	GLfloat *& normal_data, 
-	GLfloat *& texCoord_data,
-	GLfloat *& tangent_data)
+	oaVertex *& vertices_data)
 {
 	std::vector<unsigned int> vertexIndices, uvIndices, normalIndices;
 	std::vector<glm::vec3> temp_vertices;
@@ -194,14 +184,11 @@ GLuint oaMeshLoader::loadOBJ(
 	// Close file
 	fclose(file);
 
-	*&vertex_size = vertexIndices.size() * 3;
-	*&vertex_data = new float[*&vertex_size];
-	*&normal_data = new float[*&vertex_size];
-	*&texCoord_data = new float[uvIndices.size() * 2];
-	*&tangent_data = new float[*&vertex_size];
+	vertex_size = vertexIndices.size();
+	*&vertices_data = new oaVertex[vertex_size];
 
 	// For each vertex of each triangle
-	for (unsigned int i = 0; i < vertex_size / 3; i++) {
+	for (unsigned int i = 0; i < vertex_size; i++) {
 
 		// the index to the vertex position is vertexIndices[i] :
 		unsigned int vertexIndex = vertexIndices[i];
@@ -215,50 +202,53 @@ GLuint oaMeshLoader::loadOBJ(
 		glm::vec2 uv = temp_uvs[uvIndex - 1];
 
 		// And this makes the position of our new vertex
-		*&vertex_data[0 + i * 3] = vertex.x;
-		*&vertex_data[1 + i * 3] = vertex.y;
-		*&vertex_data[2 + i * 3] = vertex.z;
+		vertices_data[i].position[0] = vertex.x;
+		vertices_data[i].position[1] = vertex.y;
+		vertices_data[i].position[2] = vertex.z;
 
 		// Normals
-		*&normal_data[0 + i * 3] = normal.x;
-		*&normal_data[1 + i * 3] = normal.y;
-		*&normal_data[2 + i * 3] = normal.z;
+		vertices_data[i].normal[0] = normal.x;
+		vertices_data[i].normal[1] = normal.y;
+		vertices_data[i].normal[2] = normal.z;
 		//UVs
-		*&texCoord_data[0 + i * 2] = uv.x;
-		*&texCoord_data[1 + i * 2] = uv.y;
+		vertices_data[i].texCoord[0] = uv.x;
+		vertices_data[i].texCoord[1] = uv.y;
 	}
 
-	computeTangentBasis(vertex_size, *&vertex_data, *&normal_data, *&texCoord_data, *&tangent_data);
+	computeTangentBasis(vertex_size, *&vertices_data);
+
+	auto temp = std::vector<oaVertex>();
+	temp.insert(temp.end(), &vertices_data[0], &vertices_data[vertex_size -1]);
 
 	// Generate vertex array object
 	glGenVertexArrays(1, &mesh_VAO);
 	glBindVertexArray(mesh_VAO);
 
 	// Generate buffer
-	glGenBuffers(4, &mesh_VBO[0]);
+	glGenBuffers(1, &mesh_VBO[0]);
 
 	// Put the resulting identifier as GL_ARRAY_BUFFER
 	glBindBuffer(GL_ARRAY_BUFFER, mesh_VBO[OA_BUFFER_VERTEX]);
 	// Set our vertices to mesh_VBO[OA_BUFFER_VERTEX]
-	glBufferData(GL_ARRAY_BUFFER, vertex_size * sizeof(GLfloat), vertex_data, GL_STATIC_DRAW);
-	// Set vertex attrib to VAO?
-	glVertexAttribPointer(OA_LOCATION_VERTEX, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glBufferData(GL_ARRAY_BUFFER, vertex_size * sizeof(oaVertex), *&vertices_data, GL_STATIC_DRAW);
+
+	// Set Vertex Attributes to Vertex Array Object?
+	glVertexAttribPointer(OA_LOCATION_VERTEX, 3, GL_FLOAT, GL_FALSE,
+		sizeof(oaVertex), (GLvoid*)(offsetof(oaVertex, position)));
 	glEnableVertexAttribArray(OA_LOCATION_VERTEX);
 
-	glBindBuffer(GL_ARRAY_BUFFER, mesh_VBO[OA_BUFFER_NORMAL]);
-	glBufferData(GL_ARRAY_BUFFER, vertex_size * sizeof(GLfloat), normal_data, GL_STATIC_DRAW);
-	glVertexAttribPointer(OA_LOCATION_NORMAL, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glVertexAttribPointer(OA_LOCATION_NORMAL, 3, GL_FLOAT, GL_FALSE,
+		sizeof(oaVertex), (GLvoid*)(offsetof(oaVertex, normal)));
 	glEnableVertexAttribArray(OA_LOCATION_NORMAL);
 
-	glBindBuffer(GL_ARRAY_BUFFER, mesh_VBO[OA_BUFFER_TEXCOORD]);
-	glBufferData(GL_ARRAY_BUFFER, (vertex_size / 3 * 2) * sizeof(GLfloat), texCoord_data, GL_STATIC_DRAW);
-	glVertexAttribPointer(OA_LOCATION_TEXCOORD, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+	glVertexAttribPointer(OA_LOCATION_TEXCOORD, 2, GL_FLOAT, GL_FALSE,
+		sizeof(oaVertex), (GLvoid*)(offsetof(oaVertex, texCoord)));
 	glEnableVertexAttribArray(OA_LOCATION_TEXCOORD);
 
-	glBindBuffer(GL_ARRAY_BUFFER, mesh_VBO[OA_BUFFER_TANGENT]);
-	glBufferData(GL_ARRAY_BUFFER, vertex_size * sizeof(GLfloat), tangent_data, GL_STATIC_DRAW);
-	glVertexAttribPointer(OA_BUFFER_TANGENT, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-	glEnableVertexAttribArray(OA_BUFFER_TANGENT);
+	glVertexAttribPointer(OA_LOCATION_TANGENT, 3, GL_FLOAT, GL_FALSE,
+		sizeof(oaVertex), (GLvoid*)(offsetof(oaVertex, tangent)));
+	glEnableVertexAttribArray(OA_LOCATION_TANGENT);
+
 
 	// Clear the buffer
 	glBindBuffer(GL_ARRAY_BUFFER, 0);

@@ -5,9 +5,7 @@ void oaMesh::drawVAO() {
 	if (VAO == NULL) {
 		oaMeshLoader::loadOBJ(
 			fileName.c_str(),
-			vertex_size, vertex_data,
-			normal_data, texCoord_data,
-			tangent_data
+			vertex_size, vertices
 		);
 	}
 	if (VAO) {
@@ -24,10 +22,7 @@ oaMesh::oaMesh() {
 	fileName = "";
 	VAO = NULL;
 	vertex_size = NULL;
-	vertex_data = NULL;
-	normal_data = NULL;
-	texCoord_data = NULL;
-	tangent_data = NULL;
+	vertices = NULL;
 }
 
 oaMesh::oaMesh(std::string file) : oaMesh() {

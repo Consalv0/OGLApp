@@ -7,16 +7,24 @@
 #include <GLM\vec3.hpp>
 #include <GLM\vec4.hpp>
 
+#ifndef oaVertex_H
+#define oaVertex_H
+
+typedef struct oaVertex {
+	GLfloat position[3];
+	GLfloat normal[3];
+	GLfloat texCoord[2];
+	GLfloat tangent[3];
+} oaVertex;
+
+#endif // !1
 
 class oaMesh : public oaObject {
 public:
 	std::string fileName;
 	GLuint VAO;
 	size_t vertex_size;
-	GLfloat* vertex_data;
-	GLfloat* normal_data;
-	GLfloat* texCoord_data;
-	GLfloat* tangent_data;
+	oaVertex* vertices;
 
 	void drawVAO();
 

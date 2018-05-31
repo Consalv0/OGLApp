@@ -23,6 +23,7 @@
 #define OA_LOCATION_VERTEX 0
 #define OA_LOCATION_NORMAL 1
 #define OA_LOCATION_TEXCOORD 2
+#define OA_LOCATION_TANGENT 3
 
 bool oaCreateWindow(GLFWwindow **outWindow, const char *appName, const int windowMode, size_t &width, size_t &height);
 void oaInitializeInputs(GLFWwindow **window);
