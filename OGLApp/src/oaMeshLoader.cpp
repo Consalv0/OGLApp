@@ -107,7 +107,7 @@ oaMesh* oaMeshLoader::loadMesh(const char * filePath) {
 
 	meshVaoIDs.insert({ std::string(filePath), mesh });
 
-	printf("Model loaded : %s\n", filePath);
+	printf("Model loaded : %s (%i vertices)\n", filePath, mesh.vertex_size);
 	return &meshVaoIDs.find(filePath)->second;
 }
 
@@ -296,11 +296,7 @@ GLuint oaMeshLoader::loadDAE(
 	oaVertex *& vertices_data
 ) {
 	using namespace rapidxml;
-
-	std::vector<unsigned int> positionIndices, uvIndices, normalIndices;
-	std::vector<glm::vec3> temp_positions;
-	std::vector<glm::vec2> temp_uvs;
-	std::vector<glm::vec3> temp_normals;
+	std::vector<oaVertex> vertices_data_vector;
 	xml_document<wchar_t> doc;
 
 	//std::ifstream in;
@@ -319,143 +315,153 @@ GLuint oaMeshLoader::loadDAE(
 	xml_node<wchar_t> *up_axis = collada->first_node(L"asset")->first_node(L"up_axis");
 	glm::mat3 orientation = glm::mat3();
 	if (up_axis) {
-		if (wcscmp(up_axis->value(), L"Z_UP") == 0) {
-			orientation = {
-				1, 0, 0,
-				0, 0, 1,
-				0, -1, 0,
-			};
+		if (wcscmp(up_axis->value(), L"Z_UP") == 0) { 
+			orientation = { 1,  0, 0,
+											0,  0, 1,
+											0, -1, 0, };
 		}
-		else if (wcscmp(up_axis->value(), L"Y_UP") == 0) {
-			orientation = {
-				1, 0, 0,
-				0, 1, 0,
-				0, 0, 1,
-			};
-		}
+		//else if (wcscmp(up_axis->value(), L"Y_UP") == 0) {
+		//	orientation = { 1, 0, 0,
+		//		              0, 1, 0,
+		//		              0, 0, 1, };
+		//}
 		else if (wcscmp(up_axis->value(), L"X_UP") == 0) {
-			orientation = {
-				0, -1, 0,
-				1, 0, 0,
-				0, 0, 1,
-			};
+			orientation = { 0, -1, 0,
+				              1,  0, 0,
+				              0,  0, 1, };
 		}
 	}
 
-	xml_node<wchar_t> *library_geometries = collada->first_node(L"library_geometries");
-	xml_node<wchar_t> *mesh = library_geometries->first_node(L"geometry")->first_node(L"mesh");
-	xml_node<wchar_t> *source = mesh->first_node(L"source");
+	xml_node<wchar_t> *library_geometries = collada->first_node(L"library_geometries"); 
+	xml_node<wchar_t> *geometry = library_geometries->first_node(L"geometry");
 
-	while (source) {
-		wchar_t* type = source->first_attribute()->value();
+	while (geometry) {
+		xml_node<wchar_t> *mesh = geometry->first_node(L"mesh");
+		if (!mesh) { continue; }
+		
+		std::vector<unsigned int> positionIndices, uvIndices, normalIndices;
+		std::vector<glm::vec3> temp_positions;
+		std::vector<glm::vec2> temp_uvs;
+		std::vector<glm::vec3> temp_normals;
 
-		if (oaEndsWidth(L"mesh-positions", type)) {
-			xml_node<wchar_t> *farray = source->first_node(L"float_array");
-			
-			glm::vec3 position;
-			std::wistringstream iss(farray->value());
-			for (std::wstring s; iss >> s; ) {
-				position.x = (float)_wtof(s.c_str());
-				s.clear(); iss >> s;
-				position.y = (float)_wtof(s.c_str());
-				s.clear(); iss >> s;
-				position.z = (float)_wtof(s.c_str());
-				position = position * orientation;
-				temp_positions.push_back(position);
+		xml_node<wchar_t> *source = mesh->first_node(L"source");
+		while (source) {
+			wchar_t* type = source->first_attribute()->value();
+
+			if (oaEndsWidth(L"mesh-positions", type)) {
+				xml_node<wchar_t> *farray = source->first_node(L"float_array");
+
+				glm::vec3 position;
+				std::wistringstream iss(farray->value());
+				for (std::wstring s; iss >> s; ) {
+					position.x = (float)_wtof(s.c_str());
+					s.clear(); iss >> s;
+					position.y = (float)_wtof(s.c_str());
+					s.clear(); iss >> s;
+					position.z = (float)_wtof(s.c_str());
+					position = position * orientation;
+					temp_positions.push_back(position);
+				}
 			}
-		}
-		if (oaEndsWidth(L"mesh-normals", type)) {
-			xml_node<wchar_t> *farray = source->first_node(L"float_array");
+			if (oaEndsWidth(L"mesh-normals", type)) {
+				xml_node<wchar_t> *farray = source->first_node(L"float_array");
 
-			glm::vec3 normal;
-			std::wistringstream iss(farray->value());
-			for (std::wstring s; iss >> s; ) {
-				normal.x = (float)_wtof(s.c_str());
-				s.clear(); iss >> s;
-				normal.y = (float)_wtof(s.c_str());
-				s.clear(); iss >> s;
-				normal.z = (float)_wtof(s.c_str());
-				normal = normal * orientation;
-				temp_normals.push_back(normal);
+				glm::vec3 normal;
+				std::wistringstream iss(farray->value());
+				for (std::wstring s; iss >> s; ) {
+					normal.x = (float)_wtof(s.c_str());
+					s.clear(); iss >> s;
+					normal.y = (float)_wtof(s.c_str());
+					s.clear(); iss >> s;
+					normal.z = (float)_wtof(s.c_str());
+					normal = normal * orientation;
+					temp_normals.push_back(normal);
+				}
 			}
-		}
 
-		if (oaEndsWidth(L"mesh-map-0", type)) {
-			xml_node<wchar_t> *farray = source->first_node(L"float_array");
+			if (oaEndsWidth(L"mesh-map-0", type)) {
+				xml_node<wchar_t> *farray = source->first_node(L"float_array");
 
-			glm::vec3 uv;
-			std::wistringstream iss(farray->value());
-			for (std::wstring s; iss >> s; ) {
-				uv.x = (float)_wtof(s.c_str());
-				s.clear(); iss >> s;
-				uv.y = (float)_wtof(s.c_str());
-				temp_uvs.push_back(uv);
+				glm::vec3 uv;
+				std::wistringstream iss(farray->value());
+				for (std::wstring s; iss >> s; ) {
+					uv.x = (float)_wtof(s.c_str());
+					s.clear(); iss >> s;
+					uv.y = (float)_wtof(s.c_str());
+					temp_uvs.push_back(uv);
+				}
 			}
-		}
 
-		if (wcscmp(source->name(), L"triangles") == 0) {
-			xml_node<wchar_t> *input = source->first_node(L"input");
-			int vertexOff = 0, normalOff = 0, texCoordOff = 0;
+			if (wcscmp(source->name(), L"triangles") == 0) {
+				xml_node<wchar_t> *input = source->first_node(L"input");
+				int vertexOff = 0, normalOff = 0, texCoordOff = 0;
 
-			while(input) {
-				if (xml_attribute<wchar_t> *attr = input->first_attribute(L"semantic")) {
-					     if (wcscmp(attr->value(), L"VERTEX") == 0)   { vertexOff = _wtoi(input->first_attribute(L"offset")->value()); }
-					else if (wcscmp(attr->value(), L"NORMAL") == 0)   { normalOff = _wtoi(input->first_attribute(L"offset")->value()); }
-					else if (wcscmp(attr->value(), L"TEXCOORD") == 0) { texCoordOff = _wtoi(input->first_attribute(L"offset")->value()); }
+				while (input) {
+					if (xml_attribute<wchar_t> *attr = input->first_attribute(L"semantic")) {
+						if (wcscmp(attr->value(), L"VERTEX") == 0) { vertexOff = _wtoi(input->first_attribute(L"offset")->value()); }
+						else if (wcscmp(attr->value(), L"NORMAL") == 0) { normalOff = _wtoi(input->first_attribute(L"offset")->value()); } 
+						else if (wcscmp(attr->value(), L"TEXCOORD") == 0) { texCoordOff = _wtoi(input->first_attribute(L"offset")->value()); }
+					}
+
+					input = input->next_sibling();
 				}
 
-				input = input->next_sibling();
+				xml_node<wchar_t> *vertex = source->first_node(L"p");
+
+				std::wistringstream iss(vertex->value());
+				for (std::wstring s; iss >> s; ) {
+					unsigned int vertexIndex[3];
+					vertexIndex[0] = _wtoi(s.c_str());
+					iss >> s;
+					vertexIndex[1] = _wtoi(s.c_str());
+					iss >> s;
+					vertexIndex[2] = _wtoi(s.c_str());
+
+					positionIndices.push_back(vertexIndex[vertexOff]);
+					normalIndices.push_back(vertexIndex[normalOff]);
+					uvIndices.push_back(vertexIndex[texCoordOff]);
+				}
 			}
 
-			xml_node<wchar_t> *vertex = source->first_node(L"p");
-
-			std::wistringstream iss(vertex->value());
-			for (std::wstring s; iss >> s; ) {
-				unsigned int vertexIndex[3];
-				vertexIndex[0] = _wtoi(s.c_str());
-				iss >> s;
-				vertexIndex[1] = _wtoi(s.c_str());
-				iss >> s;
-				vertexIndex[2] = _wtoi(s.c_str());
-
-				positionIndices.push_back(vertexIndex[vertexOff]);
-				normalIndices.push_back(vertexIndex[normalOff]);
-				uvIndices.push_back(vertexIndex[texCoordOff]);
-			}
+			source = source->next_sibling();
 		}
 
-		source = source->next_sibling();
+		// For each vertex
+		for (unsigned int i = 0; i < positionIndices.size(); i++) {
+
+			// the index to the vertex position is vertexIndices[i] :
+			unsigned int vertexIndex = positionIndices[i];
+			unsigned int normalIndex = normalIndices[i];
+			unsigned int uvIndex = uvIndices[i];
+
+			// get the index
+			glm::vec3 vertex = temp_positions[vertexIndex];
+			glm::vec3 normal = temp_normals[normalIndex];
+			glm::vec2 uv = temp_uvs[uvIndex];
+
+			// And this makes the position of our new vertex
+			vertices_data_vector.push_back(oaVertex());
+			oaVertex* vertexData = &vertices_data_vector.back();
+			vertexData->position[0] = vertex.x;
+			vertexData->position[1] = vertex.y;
+			vertexData->position[2] = vertex.z;
+
+			// Normals
+			vertexData->normal[0] = normal.x;
+			vertexData->normal[1] = normal.y;
+			vertexData->normal[2] = normal.z;
+			//UVs
+			vertexData->texCoord[0] = uv.x;
+			vertexData->texCoord[1] = uv.y;
+		}
+
+		geometry = geometry->next_sibling();
 	}
 
-	vertex_size = positionIndices.size();
-	*&vertices_data = new oaVertex[vertex_size];
+	vertex_size = vertices_data_vector.size();
 
-	// For each vertex
-	for (unsigned int i = 0; i < vertex_size; i++) {
-
-		// the index to the vertex position is vertexIndices[i] :
-		unsigned int vertexIndex = positionIndices[i];
-		unsigned int normalIndex = normalIndices[i];
-		unsigned int uvIndex = uvIndices[i];
-
-		// get the index
-		glm::vec3 vertex = temp_positions[vertexIndex];
-		glm::vec3 normal = temp_normals[normalIndex];
-		glm::vec2 uv = temp_uvs[uvIndex];
-
-		// And this makes the position of our new vertex
-		vertices_data[i].position[0] = vertex.x;
-		vertices_data[i].position[1] = vertex.y;
-		vertices_data[i].position[2] = vertex.z;
-
-		// Normals
-		vertices_data[i].normal[0] = normal.x;
-		vertices_data[i].normal[1] = normal.y;
-		vertices_data[i].normal[2] = normal.z;
-		//UVs
-		vertices_data[i].texCoord[0] = uv.x;
-		vertices_data[i].texCoord[1] = uv.y;
-	}
+	if (vertex_size <= 0) return NULL;
+	vertices_data = &vertices_data_vector[0];
 
 	computeTangentBasis(vertex_size, *&vertices_data);
 

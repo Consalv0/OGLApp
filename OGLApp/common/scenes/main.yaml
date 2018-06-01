@@ -168,7 +168,7 @@ oaMeshRenderer:
     _entityID: 209146810
   material:
     _id: 143285148
-  mesh: common\models\packman.dae
+  mesh: common\models\datsun510.dae
   castShadow: true
   light: 0
 ---
