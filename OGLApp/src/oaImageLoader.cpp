@@ -27,7 +27,28 @@ GLuint oaImageLoader::loadImage(std::string & filePath, size_t & outWidth, size_
 		glBindTexture(GL_TEXTURE_2D, whiteTextureID);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid *)data);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid *)data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+
+		imagesIDs.insert({ filePath, whiteTextureID });
+		return whiteTextureID;
+	}
+
+	if (filePath == "normal") {
+		unsigned char* data = new unsigned char[8 * sizeof(unsigned char)];
+
+		for (int i = 0; i < (int)(8 * sizeof(unsigned char)); i+=3) {
+			data[i + 0] = 127;
+			data[i + 1] = 127;
+			data[i + 2] = 255;
+		}
+
+		GLuint whiteTextureID;
+		glGenTextures(1, &whiteTextureID);
+		glBindTexture(GL_TEXTURE_2D, whiteTextureID);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid *)data);
 		glGenerateMipmap(GL_TEXTURE_2D);
 
 		imagesIDs.insert({ filePath, whiteTextureID });

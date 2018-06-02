@@ -19,8 +19,8 @@ oaMaterial:
   vertexShaderPath: common\shaders\Base_vertex.glsl
   fragmentShaderPath: common\shaders\PBLShader_fragment.glsl
   texturePath: white
-  normalTexturePath: white
-  metalnessTexturePath: white
+  normalTexturePath: normal
+  metalnessTexturePath: ""
   roughnessTexturePath: white
   enableZBuffer: true
   depthFunction: 513
@@ -108,6 +108,23 @@ oaMaterial:
   roughness: 1
   metallic: 1
 ---
+oaMaterial:
+  _id: 143285178
+  vertexShaderPath: common\shaders\Base_vertex.glsl
+  fragmentShaderPath: common\shaders\PBLShader_fragment.glsl
+  texturePath: common\textures\ColorSchemesRed.png
+  normalTexturePath: normal
+  metalnessTexturePath: ""
+  roughnessTexturePath: white
+  enableZBuffer: true
+  depthFunction: 513
+  polygonMode: 6914
+  specularColor: [0.9, 0.4, 0.2]
+  ambientColor: [0.3, 0.3, 0.3]
+  diffuseColor: [1, 1, 1, 0]
+  roughness: 1
+  metallic: 1
+---
 luaTest:
   _id: 170709644
   oaComponent:
@@ -167,8 +184,8 @@ oaMeshRenderer:
   oaComponent:
     _entityID: 209146810
   material:
-    _id: 143285148
-  mesh: common\models\datsun510.dae
+    _id: 143285178
+  mesh: common\models\crab.dae
   castShadow: true
   light: 0
 ---

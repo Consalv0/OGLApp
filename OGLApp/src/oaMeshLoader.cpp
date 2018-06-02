@@ -332,7 +332,9 @@ GLuint oaMeshLoader::loadDAE(
 		}
 	}
 
-	xml_node<wchar_t> *library_geometries = collada->first_node(L"library_geometries"); 
+	xml_node<wchar_t> *library_geometries = collada->first_node(L"library_geometries");
+	// TODO Add library_visual_scenes for accurate positions
+	// TODO Add library_controllers for bones
 	xml_node<wchar_t> *geometry = library_geometries->first_node(L"geometry");
 
 	while (geometry) {
@@ -394,15 +396,16 @@ GLuint oaMeshLoader::loadDAE(
 
 			if (wcscmp(source->name(), L"triangles") == 0) {
 				xml_node<wchar_t> *input = source->first_node(L"input");
-				int vertexOff = 0, normalOff = 0, texCoordOff = 0;
+				int vertexOff = -1, normalOff = -1, texCoordOff = -1;
 
+				int totalOffset = -1;
 				while (input) {
 					if (xml_attribute<wchar_t> *attr = input->first_attribute(L"semantic")) {
 						if (wcscmp(attr->value(), L"VERTEX") == 0) { vertexOff = _wtoi(input->first_attribute(L"offset")->value()); }
 						else if (wcscmp(attr->value(), L"NORMAL") == 0) { normalOff = _wtoi(input->first_attribute(L"offset")->value()); } 
 						else if (wcscmp(attr->value(), L"TEXCOORD") == 0) { texCoordOff = _wtoi(input->first_attribute(L"offset")->value()); }
 					}
-
+					totalOffset += 1;
 					input = input->next_sibling();
 				}
 
@@ -410,16 +413,20 @@ GLuint oaMeshLoader::loadDAE(
 
 				std::wistringstream iss(vertex->value());
 				for (std::wstring s; iss >> s; ) {
-					unsigned int vertexIndex[3];
-					vertexIndex[0] = _wtoi(s.c_str());
-					iss >> s;
-					vertexIndex[1] = _wtoi(s.c_str());
-					iss >> s;
-					vertexIndex[2] = _wtoi(s.c_str());
-
-					positionIndices.push_back(vertexIndex[vertexOff]);
-					normalIndices.push_back(vertexIndex[normalOff]);
-					uvIndices.push_back(vertexIndex[texCoordOff]);
+					for (int i = 0; i < totalOffset; i++) {
+						if (i > 0) {
+							s.clear(); iss >> s;
+						}
+						if (vertexOff >= 0 && vertexOff == i) {
+							positionIndices.push_back(_wtoi(s.c_str()));
+						}
+						if (normalOff >= 0 && normalOff == i) {
+							normalIndices.push_back(_wtoi(s.c_str()));
+						}
+						if (texCoordOff >= 0 && texCoordOff == i) {
+							uvIndices.push_back(_wtoi(s.c_str()));
+						}
+					}
 				}
 			}
 
