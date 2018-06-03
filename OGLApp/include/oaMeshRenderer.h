@@ -22,7 +22,7 @@ public:
 
 	oaMesh *mesh;
 
-	void drawMesh();
+	void drawMesh(GLuint programID = -1);
 
 	void     awake();
 	void     start();

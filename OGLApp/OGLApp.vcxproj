@@ -139,7 +139,9 @@
   <ItemGroup>
     <ClCompile Include="include\lodepng\lodepng.cpp" />
     <ClCompile Include="include\oaMain.h" />
+    <ClCompile Include="src\aoAnimation.cpp" />
     <ClCompile Include="src\luaTest.cpp" />
+    <ClCompile Include="src\oaJoint.cpp" />
     <ClCompile Include="src\oaLuaBehavior.cpp" />
     <ClCompile Include="src\oaCamera.cpp" />
     <ClCompile Include="src\oaComponent.cpp" />
@@ -163,6 +165,8 @@
     <ClCompile Include="src\oaMeshRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\oaAnimation.h" />
+    <ClInclude Include="include\oaJoint.h" />
     <ClInclude Include="include\oaLoaderUtils.h" />
     <ClInclude Include="include\libpng\png.h" />
     <ClInclude Include="include\libpng\pngconf.h" />

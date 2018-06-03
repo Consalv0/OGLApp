@@ -38,9 +38,10 @@ void main() {
   // For each weight
   for (int i = 0; i < MAX_WEIGHTS; i++) {
     mat4 jointTransform = _jointTransforms[in_JointIDs[i]];
-    vec4 pose = (jointTransform * vec4(1)) * in_Weights[i];
+    vec4 pose = (jointTransform * vec4(in_Position, 1.0)) * in_Weights[i];
+    vec4 normal = (jointTransform * vec4(in_Normal, 1.0)) * in_Weights[i];
     vertPosition += pose;
-    normalDirection += pose.xyz;
+    normalDirection += normal.xyz;
   }
 
   // Now set the position in view space

@@ -7,13 +7,30 @@
 
 const char* oaRendererManager::vertexDepthShader = R"VERT(
 #version 330 core
+
+const int MAX_JOINTS = 50;
+const int MAX_WEIGHTS = 3; 
+
 layout (location = 0) in vec3 in_Position;
+layout (location = 4) in ivec4 in_JointIDs;
+layout (location = 5) in vec4 in_Weights;
 
 uniform mat4 _lightSpaceMatrix;
 uniform mat4 _modelMatrix;
+uniform mat4 _jointTransforms[MAX_JOINTS];
 
 void main() {
-  gl_Position = _lightSpaceMatrix * _modelMatrix * vec4(in_Position, 1.0);
+  vec4 vertPosition = vec4(in_Position, 1.0);
+
+  // For each weight
+  for (int i = 0; i < MAX_WEIGHTS; i++) {
+    mat4 jointTransform = _jointTransforms[in_JointIDs[i]];
+    vec4 pose = (jointTransform * vec4(in_Position, 1.0)) * in_Weights[i];
+    vertPosition += pose;
+  }
+
+  vertPosition = _modelMatrix * vertPosition;
+  gl_Position = _lightSpaceMatrix * vertPosition;
 }  
 	)VERT";
 const char* oaRendererManager::fragmentDepthShader = R"FRAG(
@@ -111,7 +128,7 @@ void oaRendererManager::renderShadowMaps() {
 					glUniformMatrix4fv(lightSpaceID, 1, GL_FALSE, glm::value_ptr(light->getLightSpace()));
 					glUniformMatrix4fv(modelMatrixID, 1, GL_FALSE, &(renderer->transform()->SRT())[0][0]);
 					if (!renderer->mesh) return;
-					renderer->drawMesh();
+					renderer->drawMesh(programID);
 				}
 			}
 		}

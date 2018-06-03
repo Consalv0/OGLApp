@@ -185,7 +185,7 @@ oaMeshRenderer:
     _entityID: 209146810
   material:
     _id: 143285178
-  mesh: common\models\crab.dae
+  mesh: common\models\packman.dae
   castShadow: true
   light: 0
 ---

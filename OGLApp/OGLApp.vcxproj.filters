@@ -141,6 +141,12 @@
     <ClCompile Include="src\oaTransform.cpp">
       <Filter>src\OGLApp\components</Filter>
     </ClCompile>
+    <ClCompile Include="src\aoAnimation.cpp">
+      <Filter>src\OGLApp</Filter>
+    </ClCompile>
+    <ClCompile Include="src\oaJoint.cpp">
+      <Filter>src\OGLApp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\GL\eglew.h">
@@ -724,6 +730,12 @@
     </ClInclude>
     <ClInclude Include="include\rapidxml\rapidxml_utils.hpp">
       <Filter>include\RapidXML</Filter>
+    </ClInclude>
+    <ClInclude Include="include\oaJoint.h">
+      <Filter>include\OGLApp</Filter>
+    </ClInclude>
+    <ClInclude Include="include\oaAnimation.h">
+      <Filter>include\OGLApp</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

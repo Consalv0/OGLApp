@@ -7,7 +7,8 @@
 #include "oaMeshLoader.h"
 #include "oaRendererManager.h"
 
-void oaMeshRenderer::drawMesh() {
+void oaMeshRenderer::drawMesh(GLuint programID) {
+	mesh->setUniforms(programID == -1 ? material->getProgramID() : programID);
 	mesh->drawVAO();
 }
 

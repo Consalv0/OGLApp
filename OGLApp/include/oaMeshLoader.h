@@ -2,10 +2,12 @@
 
 #include "oaGraphics.h"
 #include <unordered_map>
+#include "rapidxml\rapidxml.hpp"
 
 #define   OA_BUFFER_VERTEX 0
 
 class oaMesh;
+class oaJoint;
 struct oaVertex;
 
 class oaMeshLoader {
@@ -36,5 +38,16 @@ private:
 		const char *filePath,
 		size_t& vertex_size,
 		oaVertex *&vertex_data
+	);
+
+	static std::vector<oaJoint> loadDAEJoints(
+		const char *filePath,
+		oaJoint& jointHierarchy
+	);
+
+	static bool findInnerJoints(
+		oaJoint*& jointResult,
+		std::vector<oaJoint>& joints,
+		rapidxml::xml_node<wchar_t> *node
 	);
 };

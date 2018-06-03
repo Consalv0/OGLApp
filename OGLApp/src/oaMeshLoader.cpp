@@ -2,6 +2,9 @@
 #include "oaMesh.h"
 #include "oaLoaderUtils.h"
 #include <math.h>
+#include <codecvt>
+#include <locale>
+#include "oaJoint.h"
 #include "rapidxml\rapidxml.hpp"
 #include "rapidxml\rapidxml_iterators.hpp"
 #include "rapidxml\rapidxml_print.hpp"
@@ -94,17 +97,23 @@ oaMesh* oaMeshLoader::loadMesh(const char * filePath) {
 		mesh.VAO = loadDAE(
 			filePath, mesh.vertex_size, mesh.vertices
 		);
+		mesh.jointPoses = loadDAEJoints(
+			filePath, mesh.jointHierarchy
+		);
 
+	// Format not supported
 	} else {
 		printf("File extension no supported: '%s'", fileExt.c_str());
 		return NULL;
 	}
 
+	// Format supported, file unsopported
 	if (mesh.VAO == NULL) {
 		printf("Unable to load '%s'\n", filePath);
 		return NULL;
 	}
 
+	// All right, add to the list of meshes
 	meshVaoIDs.insert({ std::string(filePath), mesh });
 
 	printf("Model loaded : %s (%i vertices)\n", filePath, mesh.vertex_size);
@@ -116,7 +125,6 @@ GLuint oaMeshLoader::bindData(
 	oaVertex *& vertices_data
 ) {
 	GLuint mesh_VAO = NULL; GLuint mesh_VBO[6];
-
 
 	// Generate vertex array object
 	glGenVertexArrays(1, &mesh_VAO);
@@ -130,7 +138,7 @@ GLuint oaMeshLoader::bindData(
 	// Set our vertices to mesh_VBO[OA_BUFFER_VERTEX]
 	glBufferData(GL_ARRAY_BUFFER, vertex_size * sizeof(oaVertex), *&vertices_data, GL_STATIC_DRAW);
 
-	// Set Vertex Attributes to Vertex Array Object?
+	// Set Vertex Attributes to Vertex Array Object
 	glVertexAttribPointer(OA_LOCATION_VERTEX, 3, GL_FLOAT, GL_FALSE,
 		sizeof(oaVertex), (GLvoid*)(offsetof(oaVertex, position)));
 	glEnableVertexAttribArray(OA_LOCATION_VERTEX);
@@ -308,11 +316,15 @@ GLuint oaMeshLoader::loadDAE(
 	//char *text;
 	//in >> text;
 
+	// Open file
 	file<wchar_t> fileXml(filePath);
 	doc.parse<0>(fileXml.data());    // 0 means default parse flags
 
+	// COLLADA |
+	//         --> asset (Global Information)
 	xml_node<wchar_t> *collada = doc.first_node(L"COLLADA");
 	xml_node<wchar_t> *up_axis = collada->first_node(L"asset")->first_node(L"up_axis");
+	// Get the model orientation, OpenGl is Y-Up oriented
 	glm::mat3 orientation = glm::mat3();
 	if (up_axis) {
 		if (wcscmp(up_axis->value(), L"Z_UP") == 0) { 
@@ -332,23 +344,33 @@ GLuint oaMeshLoader::loadDAE(
 		}
 	}
 
+	// TODO Add library_visual_scenes for accurate positions (maybe)
+
+	// Parsing the geometry, skins and joint transforms 
+	/// GEOMETRY
 	xml_node<wchar_t> *library_geometries = collada->first_node(L"library_geometries");
-	// TODO Add library_visual_scenes for accurate positions
-	// TODO Add library_controllers for bones
 	xml_node<wchar_t> *geometry = library_geometries->first_node(L"geometry");
 
-	while (geometry) {
+	// For now, I will only parse the first mesh, for simplicity, but i will lieave the while 
+	// to remmember doing it
+	// while (geometry) {
 		xml_node<wchar_t> *mesh = geometry->first_node(L"mesh");
-		if (!mesh) { continue; }
+		if (!mesh) { return NULL; } // if (!mesh) { continue; }
+		// The current geomotry name, Is useful later
+		std::wstring geometryName = geometry->first_attribute(L"name")->value();
 		
 		std::vector<unsigned int> positionIndices, uvIndices, normalIndices;
 		std::vector<glm::vec3> temp_positions;
 		std::vector<glm::vec2> temp_uvs;
 		std::vector<glm::vec3> temp_normals;
 
+		// We will iterate in all poperties inside the mesh to ghet all the data
 		xml_node<wchar_t> *source = mesh->first_node(L"source");
 		while (source) {
-			wchar_t* type = source->first_attribute()->value();
+			auto firstAtt = source->first_attribute();
+			if (!firstAtt) { source = source->next_sibling(); continue; };
+
+			wchar_t* type = firstAtt->value();
 
 			if (oaEndsWidth(L"mesh-positions", type)) {
 				xml_node<wchar_t> *farray = source->first_node(L"float_array");
@@ -365,6 +387,7 @@ GLuint oaMeshLoader::loadDAE(
 					temp_positions.push_back(position);
 				}
 			}
+
 			if (oaEndsWidth(L"mesh-normals", type)) {
 				xml_node<wchar_t> *farray = source->first_node(L"float_array");
 
@@ -398,20 +421,20 @@ GLuint oaMeshLoader::loadDAE(
 				xml_node<wchar_t> *input = source->first_node(L"input");
 				int vertexOff = -1, normalOff = -1, texCoordOff = -1;
 
-				int totalOffset = -1;
+				int totalOffset = 0;
 				while (input) {
 					if (xml_attribute<wchar_t> *attr = input->first_attribute(L"semantic")) {
 						if (wcscmp(attr->value(), L"VERTEX") == 0) { vertexOff = _wtoi(input->first_attribute(L"offset")->value()); }
 						else if (wcscmp(attr->value(), L"NORMAL") == 0) { normalOff = _wtoi(input->first_attribute(L"offset")->value()); } 
 						else if (wcscmp(attr->value(), L"TEXCOORD") == 0) { texCoordOff = _wtoi(input->first_attribute(L"offset")->value()); }
+						totalOffset += 1;
 					}
-					totalOffset += 1;
 					input = input->next_sibling();
 				}
 
-				xml_node<wchar_t> *vertex = source->first_node(L"p");
+				xml_node<wchar_t> *values = source->first_node(L"p");
 
-				std::wistringstream iss(vertex->value());
+				std::wistringstream iss(values->value());
 				for (std::wstring s; iss >> s; ) {
 					for (int i = 0; i < totalOffset; i++) {
 						if (i > 0) {
@@ -430,6 +453,159 @@ GLuint oaMeshLoader::loadDAE(
 				}
 			}
 
+			if (wcscmp(source->name(), L"polylist") == 0) {
+				xml_node<wchar_t> *input = source->first_node(L"input");
+				int vertexOff = -1, normalOff = -1, texCoordOff = -1;
+
+				int totalOffset = 0;
+				while (input) {
+					if (xml_attribute<wchar_t> *attr = input->first_attribute(L"semantic")) {
+						if (wcscmp(attr->value(), L"VERTEX") == 0) { vertexOff = _wtoi(input->first_attribute(L"offset")->value()); } 
+						else if (wcscmp(attr->value(), L"NORMAL") == 0) { normalOff = _wtoi(input->first_attribute(L"offset")->value()); } 
+						else if (wcscmp(attr->value(), L"TEXCOORD") == 0) { texCoordOff = _wtoi(input->first_attribute(L"offset")->value()); }
+						totalOffset += 1;
+					}
+					input = input->next_sibling();
+				}
+
+				xml_node<wchar_t> *values = source->first_node(L"p");
+				xml_node<wchar_t> *valuesCount = source->first_node(L"vcount");
+
+				std::wistringstream iss(values->value());
+				std::wistringstream issCount(valuesCount->value());
+				for (std::wstring s; iss >> s; ) {
+					std::wstring c; issCount >> c;
+					int count = _wtoi(c.c_str());
+					for (int i = 0; i < totalOffset; i++) {
+						if (i > 0) {
+							s.clear(); iss >> s;
+						}
+						if (vertexOff >= 0 && vertexOff == i) {
+							positionIndices.push_back(_wtoi(s.c_str()));
+						}
+						if (normalOff >= 0 && normalOff == i) {
+							normalIndices.push_back(_wtoi(s.c_str()));
+						}
+						if (texCoordOff >= 0 && texCoordOff == i) {
+							uvIndices.push_back(_wtoi(s.c_str()));
+						}
+					}
+				}
+			}
+
+			source = source->next_sibling();
+		}
+
+		//// For each vertex
+		//for (unsigned int i = 0; i < positionIndices.size(); i++) {
+		//	// the index to the vertex position is vertexIndices[i] :
+		//	// get the index
+		//	// And this makes the position of our new vertex
+		//	// Normals
+		//	//UVs
+		//}
+
+		// geometry = geometry->next_sibling();
+	// }
+
+	/// SKINNING
+	xml_node<wchar_t> *library_controllers = collada->first_node(L"library_controllers");
+	xml_node<wchar_t> *controller = library_controllers->first_node(L"controller");
+
+	// while (controller) {
+		std::vector<oaJoint> joints;
+		xml_node<wchar_t> *skin = controller->first_node(L"skin");
+		if (!skin) { return NULL; } // if (!skin) { continue; }
+
+		wchar_t* controllerName = controller->first_attribute(L"name")->value();
+		
+		std::vector<unsigned int> jointCountIndices;
+		std::vector<glm::ivec4> jointIndices, weightIndices;
+		std::vector<std::wstring> temp_joints;
+		std::vector<glm::mat4> temp_bindPoses;
+		std::vector<float> temp_weights;
+
+		/*xml_node<wchar_t> **/source = skin->first_node(L"source");
+		while (source) {
+			auto firstAtt = source->first_attribute();
+			if (!firstAtt) { source = source->next_sibling(); continue; };
+
+			wchar_t* type = firstAtt->value();
+
+			if (oaEndsWidth(L"skin-weights", type)) {
+				xml_node<wchar_t> *farray = source->first_node(L"float_array");
+
+				float weight;
+				std::wistringstream iss(farray->value());
+				for (std::wstring s; iss >> s; ) {
+					weight = (float)_wtof(s.c_str());
+					temp_weights.push_back(weight);
+				}
+			}
+
+			if (oaEndsWidth(L"skin-joints", type)) {
+				xml_node<wchar_t> *farray = source->first_node(L"Name_array");
+
+				std::wistringstream iss(farray->value());
+				for (std::wstring joint; iss >> joint; ) {
+					temp_joints.push_back(joint);
+				}
+			}
+
+			if (oaEndsWidth(L"skin-bind_poses", type)) {
+				xml_node<wchar_t> *farray = source->first_node(L"float_array");
+
+				std::wistringstream iss(farray->value());
+				for (std::wstring s; iss >> s; ) {
+					glm::mat4 transform;
+					for (int i = 0; i < 4; i++) {
+						transform[i][0] = (float)_wtof(s.c_str());
+						s.clear(); iss >> s;
+						transform[i][1] = (float)_wtof(s.c_str());
+						s.clear(); iss >> s;
+						transform[i][2] = (float)_wtof(s.c_str());
+						s.clear(); iss >> s;
+						transform[i][3] = (float)_wtof(s.c_str());
+						if (i < 3) { s.clear(); iss >> s; }
+					}
+					temp_bindPoses.push_back(transform);
+				}
+			}
+
+			if (wcscmp(source->name(), L"vertex_weights") == 0) {
+				xml_node<wchar_t> *input = source->first_node(L"input");
+				int jointOff = -1, weightOff = -1;
+
+				int totalOffset = 0;
+				while (input) {
+					if (xml_attribute<wchar_t> *attr = input->first_attribute(L"semantic")) {
+						if (wcscmp(attr->value(), L"JOINT") == 0) { jointOff = _wtoi(input->first_attribute(L"offset")->value()); }
+						else if (wcscmp(attr->value(), L"WEIGHT") == 0) { weightOff = _wtoi(input->first_attribute(L"offset")->value()); }
+						totalOffset += 1;
+					}
+					input = input->next_sibling();
+				}
+
+				xml_node<wchar_t> *jointCount = source->first_node(L"vcount");
+				xml_node<wchar_t> *values = source->first_node(L"v");
+
+				std::wistringstream issCount(jointCount->value());
+				std::wistringstream issValue(values->value());
+				for ( std::wstring sCount; issCount >> sCount; ) {
+					jointCountIndices.push_back(_wtoi(sCount.c_str()));
+					jointIndices.push_back({ -1, -1, -1, -1 });
+					weightIndices.push_back({ -1, -1, -1, -1 });
+					for (unsigned int i = 0; i < jointCountIndices.back() * totalOffset; i++) {
+						std::wstring s; issValue >> s;
+						if (jointOff >= 0 && jointOff == i % totalOffset) {
+							jointIndices.back()[i / totalOffset] = _wtoi(s.c_str());
+						}
+						if (weightOff >= 0 && weightOff == i % totalOffset) {
+							weightIndices.back()[i / totalOffset] = _wtoi(s.c_str());
+						}
+					}
+				}
+			}
 			source = source->next_sibling();
 		}
 
@@ -457,13 +633,32 @@ GLuint oaMeshLoader::loadDAE(
 			vertexData->normal[0] = normal.x;
 			vertexData->normal[1] = normal.y;
 			vertexData->normal[2] = normal.z;
-			//UVs
+			// UVs
 			vertexData->texCoord[0] = uv.x;
 			vertexData->texCoord[1] = uv.y;
+
+			// Joints
+			auto jointIndex = jointIndices[vertexIndex];
+			auto weightIndex = weightIndices[vertexIndex];
+
+			for (unsigned int j = 0; j < 4; j++) {
+				//auto* converter = &std::wstring_convert<std::codecvt_utf8<wchar_t>>();
+				//std::string jointName = converter->to_bytes(temp_joints[jointIndex]);
+				float weight;
+				if (weightIndex[j] == -1) {
+					weight = 0;
+				} else {
+					weight = temp_weights[weightIndex[j]];
+				}
+				vertexData->jointIDs[j] = jointIndex[j];
+				vertexData->weights[j] = weight;
+			}
 		}
 
-		geometry = geometry->next_sibling();
-	}
+	// 	controller = controller->next_sibling();
+	// }
+
+	// TODO Add library_animations
 
 	vertex_size = vertices_data_vector.size();
 
@@ -473,4 +668,210 @@ GLuint oaMeshLoader::loadDAE(
 	computeTangentBasis(vertex_size, *&vertices_data);
 
 	return bindData(vertex_size, vertices_data);
+}
+
+std::vector<oaJoint> oaMeshLoader::loadDAEJoints(const char * filePath, oaJoint & jointHierarchy) {
+	using namespace rapidxml;
+	xml_document<wchar_t> doc;
+
+	file<wchar_t> fileXml(filePath);
+	doc.parse<0>(fileXml.data());    // 0 means default parse flags
+
+																	 // COLLADA |
+																	 //         --> asset (Global Information)
+	xml_node<wchar_t> *collada = doc.first_node(L"COLLADA");
+	xml_node<wchar_t> *up_axis = collada->first_node(L"asset")->first_node(L"up_axis");
+	// Get the model orientation, OpenGl is Y-Up oriented
+	glm::mat3 orientation = glm::mat3();
+	if (up_axis) {
+		if (wcscmp(up_axis->value(), L"Z_UP") == 0) {
+			orientation = { 1,  0, 0,
+				0,  0, 1,
+				0, -1, 0, };
+		}
+		//else if (wcscmp(up_axis->value(), L"Y_UP") == 0) {
+		//	orientation = { 1, 0, 0,
+		//		              0, 1, 0,
+		//		              0, 0, 1, };
+		//}
+		else if (wcscmp(up_axis->value(), L"X_UP") == 0) {
+			orientation = { 0, -1, 0,
+				1,  0, 0,
+				0,  0, 1, };
+		}
+	}
+
+	/// SKINNING
+	xml_node<wchar_t> *library_controllers = collada->first_node(L"library_controllers");
+	xml_node<wchar_t> *controller = library_controllers->first_node(L"controller");
+
+	// while (controller) {
+		std::vector<oaJoint> joints;
+		xml_node<wchar_t> *skin = controller->first_node(L"skin");
+		if (!skin) { return std::vector<oaJoint>(); } // if (!skin) { continue; }
+
+		wchar_t* controllerName = controller->first_attribute(L"name")->value();
+
+		std::vector<unsigned int> jointCountIndices;
+		std::vector<glm::ivec4> jointIndices;
+		std::vector<std::wstring> temp_joints;
+		std::vector<glm::mat4> temp_bindPoses;
+
+		xml_node<wchar_t> *source = skin->first_node(L"source");
+		while (source) {
+			auto firstAtt = source->first_attribute();
+			if (!firstAtt) { source = source->next_sibling(); continue; };
+
+			wchar_t* type = firstAtt->value();
+
+			if (oaEndsWidth(L"skin-joints", type)) {
+				xml_node<wchar_t> *farray = source->first_node(L"Name_array");
+
+				std::wistringstream iss(farray->value());
+				for (std::wstring joint; iss >> joint; ) {
+					temp_joints.push_back(joint);
+				}
+			}
+
+			if (oaEndsWidth(L"skin-bind_poses", type)) {
+				xml_node<wchar_t> *farray = source->first_node(L"float_array");
+
+				std::wistringstream iss(farray->value());
+				for (std::wstring s; iss >> s; ) {
+					glm::mat4 transform;
+					for (int i = 0; i < 4; i++) {
+						transform[i][0] = (float)_wtof(s.c_str());
+						s.clear(); iss >> s;
+						transform[i][1] = (float)_wtof(s.c_str());
+						s.clear(); iss >> s;
+						transform[i][2] = (float)_wtof(s.c_str());
+						s.clear(); iss >> s;
+						transform[i][3] = (float)_wtof(s.c_str());
+						if (i < 3) { s.clear(); iss >> s; }
+					}
+					temp_bindPoses.push_back(transform);
+				}
+			}
+
+			if (wcscmp(source->name(), L"vertex_weights") == 0) {
+				xml_node<wchar_t> *input = source->first_node(L"input");
+				int jointOff = -1, weightOff = -1;
+
+				int totalOffset = 0;
+				while (input) {
+					if (xml_attribute<wchar_t> *attr = input->first_attribute(L"semantic")) {
+						if (wcscmp(attr->value(), L"JOINT") == 0) { jointOff = _wtoi(input->first_attribute(L"offset")->value()); } else if (wcscmp (attr->value(), L"WEIGHT") == 0) { weightOff = _wtoi(input->first_attribute(L"offset")->value()); }
+						totalOffset += 1;
+					}
+					input = input->next_sibling();
+				}
+
+				xml_node<wchar_t> *jointCount = source->first_node(L"vcount");
+				xml_node<wchar_t> *values = source->first_node(L"v");
+
+				std::wistringstream issCount(jointCount->value());
+				std::wistringstream issValue(values->value());
+				for (std::wstring sCount; issCount >> sCount; ) {
+					jointCountIndices.push_back(_wtoi(sCount.c_str()));
+					jointIndices.push_back({ -1, -1, -1, -1 });
+					for (unsigned int i = 0; i < jointCountIndices.back() * totalOffset; i++) {
+						std::wstring s; issValue >> s;
+						if (jointOff >= 0 && jointOff == i % totalOffset) {
+							jointIndices.back()[i / totalOffset] = _wtoi(s.c_str());
+						}
+					}
+				}
+			}
+			source = source->next_sibling();
+		}
+
+		// For each joint
+		for (unsigned int i = 0; i < temp_joints.size(); i++) {
+			oaJoint joint;
+			joint.name = temp_joints[i];
+			joint.id = i;
+			joint.inverseTransform = temp_bindPoses[i];
+
+			joints.push_back(joint);
+		}
+
+		oaJoint* joint = NULL;
+		if (joints.size() > 0) {
+			xml_node<wchar_t> *library_visual_scenes = collada->first_node(L"library_visual_scenes");
+			xml_node<wchar_t> *visual_scene = library_visual_scenes->first_node(L"visual_scene");
+
+			xml_node<wchar_t> *node = visual_scene->first_node(L"node");
+			while (node) {
+				xml_node<wchar_t> *innerNode = node->first_node(L"node");
+				if (!innerNode) { node = node->next_sibling(); continue; };
+
+				auto nameAtt = innerNode->first_attribute(L"name");
+				if (!nameAtt) { node = node->next_sibling(); continue; };
+				const wchar_t* name = nameAtt->value();
+				for (auto& jointI : joints) {
+					if (wcscmp(jointI.name.c_str(), name) == 0) {
+						joint = &jointI;
+						break;
+					}
+				}
+				if (joint == NULL) { node = node->next_sibling(); continue; };
+
+				findInnerJoints(joint, joints, innerNode);
+				break;
+			}
+		}
+
+	// 	controller = controller->next_sibling();
+	// }
+
+	if (!joint) return std::vector<oaJoint>();
+	jointHierarchy = *joint;
+
+	return joints;
+}
+
+bool oaMeshLoader::findInnerJoints(
+	oaJoint *& jointResult, 
+	std::vector<oaJoint>& joints,
+	rapidxml::xml_node<wchar_t>* node) {
+
+	rapidxml::xml_node<wchar_t> *farray = node->first_node(L"matrix");
+
+	std::wistringstream iss(farray->value());
+	glm::mat4 matrix;
+	for (std::wstring s; iss >> s; ) {
+		for (int i = 0; i < 4; i++) {
+			matrix[i][0] = (float)_wtof(s.c_str());
+			s.clear(); iss >> s;
+			matrix[i][1] = (float)_wtof(s.c_str());
+			s.clear(); iss >> s;
+			matrix[i][2] = (float)_wtof(s.c_str());
+			s.clear(); iss >> s;
+			matrix[i][3] = (float)_wtof(s.c_str());
+			if (i < 3) { s.clear(); iss >> s; }
+		}
+
+	}
+	jointResult->transform = matrix;
+
+	rapidxml::xml_node<wchar_t> *childNode = node->first_node(L"node");
+	while (childNode) {
+		auto nameAtt = childNode->first_attribute(L"name");
+		if (!nameAtt) { childNode = childNode->next_sibling(); continue; };
+		const wchar_t* name = nameAtt->value();
+		oaJoint* child = NULL;
+		for (auto& jointI : joints) {
+			if (wcscmp(jointI.name.c_str(), name) == 0) {
+				child = &jointI;
+				break;
+			}
+		}
+		if (child == NULL) { childNode = childNode->next_sibling(); continue; };
+
+		findInnerJoints(child, joints, childNode);
+		jointResult->children.push_back(*child);
+		childNode = childNode->next_sibling();
+	}
+
+	return true;
 }

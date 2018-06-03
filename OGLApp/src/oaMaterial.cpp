@@ -111,8 +111,8 @@ oaMaterial::oaMaterial() {
 	vertexShaderPath = "";
 	fragmentShaderPath = "";
 	texturePath = "";
-	normalTexturePath = "";
-	roughnessTexturePath = "";
+	normalTexturePath = "normal";
+	roughnessTexturePath = "white";
 	metalnessTexturePath = "";
 	programID = 0;
 	enableZBuffer = true;
