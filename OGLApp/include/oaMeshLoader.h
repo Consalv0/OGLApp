@@ -14,6 +14,7 @@ class oaMeshLoader {
 public:
 
 	static std::unordered_map<std::string, oaMesh> meshVaoIDs;
+
 	static void computeTangentBasis(
 		const size_t& vertex_size,
 		oaVertex* &vertex_data
@@ -48,6 +49,7 @@ private:
 	static bool findInnerJoints(
 		oaJoint*& jointResult,
 		std::vector<oaJoint>& joints,
-		rapidxml::xml_node<wchar_t> *node
+		rapidxml::xml_node<wchar_t> *node,
+		glm::mat4& orientation
 	);
 };

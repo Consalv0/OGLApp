@@ -189,6 +189,14 @@ oaMeshRenderer:
   castShadow: true
   light: 0
 ---
+oaAnimator:
+  _id: 104264761
+  oaComponent:
+    _entityID: 209146810
+  animation: common\models\packman.dae
+  minTime: 0
+  maxTime: 0.54
+---
 oaCamera:
   _id: 10626476
   oaComponent:
@@ -228,6 +236,7 @@ oaEntity:
     - 170719640
     - 222683080
     - 104264760
+    - 104264761
 ---
 oaEntity:
   _id: 209146816

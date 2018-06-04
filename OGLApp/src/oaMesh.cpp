@@ -21,12 +21,7 @@ void oaMesh::setUniforms(GLuint programID) {
 		for (unsigned int k = 0; k < jointPoses.size(); k++) {
 			for (int i = 0; i < 4; i++) {
 				for (int j = 0; j < 4; j++) {
-					if (k == 0) {
-						glm::mat4 matT = { {1, 0, 0, oaTime::getDeltaTime() * 100}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0 ,1} };
-						poses[k * 16 + i + j * 4] = matT[i][j];
-					} else {
-						poses[k * 16 + i + j * 4] = jointPoses.at(k).animTransform[i][j];
-					}
+					poses[k * 16 + i + j * 4] = jointPoses.at(k).animTransform[i][j];
 				}
 			}
 		}

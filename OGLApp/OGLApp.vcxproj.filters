@@ -141,10 +141,16 @@
     <ClCompile Include="src\oaTransform.cpp">
       <Filter>src\OGLApp\components</Filter>
     </ClCompile>
-    <ClCompile Include="src\aoAnimation.cpp">
+    <ClCompile Include="src\oaJoint.cpp">
       <Filter>src\OGLApp</Filter>
     </ClCompile>
-    <ClCompile Include="src\oaJoint.cpp">
+    <ClCompile Include="src\oaAnimation.cpp">
+      <Filter>src\OGLApp</Filter>
+    </ClCompile>
+    <ClCompile Include="src\oaAnimator.cpp">
+      <Filter>src\OGLApp\components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\oaAnimationLoader.cpp">
       <Filter>src\OGLApp</Filter>
     </ClCompile>
   </ItemGroup>
@@ -735,6 +741,12 @@
       <Filter>include\OGLApp</Filter>
     </ClInclude>
     <ClInclude Include="include\oaAnimation.h">
+      <Filter>include\OGLApp</Filter>
+    </ClInclude>
+    <ClInclude Include="include\oaAnimator.h">
+      <Filter>include\OGLApp\components</Filter>
+    </ClInclude>
+    <ClInclude Include="include\oaAnimationLoader.h">
       <Filter>include\OGLApp</Filter>
     </ClInclude>
   </ItemGroup>

@@ -101,6 +101,7 @@ oaMesh* oaMeshLoader::loadMesh(const char * filePath) {
 			filePath, mesh.jointHierarchy
 		);
 
+
 	// Format not supported
 	} else {
 		printf("File extension no supported: '%s'", fileExt.c_str());
@@ -682,12 +683,13 @@ std::vector<oaJoint> oaMeshLoader::loadDAEJoints(const char * filePath, oaJoint 
 	xml_node<wchar_t> *collada = doc.first_node(L"COLLADA");
 	xml_node<wchar_t> *up_axis = collada->first_node(L"asset")->first_node(L"up_axis");
 	// Get the model orientation, OpenGl is Y-Up oriented
-	glm::mat3 orientation = glm::mat3();
+	glm::mat4 orientation = glm::mat4();
 	if (up_axis) {
 		if (wcscmp(up_axis->value(), L"Z_UP") == 0) {
-			orientation = { 1,  0, 0,
-				0,  0, 1,
-				0, -1, 0, };
+			orientation = { 1,  0, 0, 0,
+				              0,  0, 1, 0,
+				              0, -1, 0, 0,
+				              0,  0, 0, 1 };
 		}
 		//else if (wcscmp(up_axis->value(), L"Y_UP") == 0) {
 		//	orientation = { 1, 0, 0,
@@ -695,9 +697,10 @@ std::vector<oaJoint> oaMeshLoader::loadDAEJoints(const char * filePath, oaJoint 
 		//		              0, 0, 1, };
 		//}
 		else if (wcscmp(up_axis->value(), L"X_UP") == 0) {
-			orientation = { 0, -1, 0,
-				1,  0, 0,
-				0,  0, 1, };
+			orientation = { 0, -1, 0, 0,
+				              1,  0, 0, 0, 
+				              0,  0, 1, 0,
+			                0,  0, 0, 1};
 		}
 	}
 
@@ -816,7 +819,7 @@ std::vector<oaJoint> oaMeshLoader::loadDAEJoints(const char * filePath, oaJoint 
 				}
 				if (joint == NULL) { node = node->next_sibling(); continue; };
 
-				findInnerJoints(joint, joints, innerNode);
+				findInnerJoints(joint, joints, innerNode, orientation);
 				break;
 			}
 		}
@@ -833,7 +836,8 @@ std::vector<oaJoint> oaMeshLoader::loadDAEJoints(const char * filePath, oaJoint 
 bool oaMeshLoader::findInnerJoints(
 	oaJoint *& jointResult, 
 	std::vector<oaJoint>& joints,
-	rapidxml::xml_node<wchar_t>* node) {
+	rapidxml::xml_node<wchar_t>* node,
+	glm::mat4& orientation) {
 
 	rapidxml::xml_node<wchar_t> *farray = node->first_node(L"matrix");
 
@@ -868,7 +872,7 @@ bool oaMeshLoader::findInnerJoints(
 		}
 		if (child == NULL) { childNode = childNode->next_sibling(); continue; };
 
-		findInnerJoints(child, joints, childNode);
+		findInnerJoints(child, joints, childNode, orientation);
 		jointResult->children.push_back(*child);
 		childNode = childNode->next_sibling();
 	}
