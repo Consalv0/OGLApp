@@ -4,6 +4,7 @@
 #include "oaImageLoader.h"
 #include "oaCamera.h"
 #include "oaLight.h"
+#include "oaTransform.h"
 
 void oaMaterial::initialize() {
 	loadShader();
@@ -21,10 +22,10 @@ void oaMaterial::getUniformIDs() {
 		        viewMatrixID = glGetUniformLocation(getProgramID(), "_viewMatrix");
 		       modelMatrixID = glGetUniformLocation(getProgramID(), "_modelMatrix");
 		normalWorldlMatrixID = glGetUniformLocation(getProgramID(), "_normalWorldMatrix");
-					 lightMatrixID = glGetUniformLocation(getProgramID(), "_lightMatrix");
+			   lightMatrixID = glGetUniformLocation(getProgramID(), "_lightMatrix");
 		       eyePositionID = glGetUniformLocation(getProgramID(), "_eyePosition");
 		     lightPositionID = glGetUniformLocation(getProgramID(), "_lightPosition");
-				lightDirectionID = glGetUniformLocation(getProgramID(), "_lightDirection");
+			lightDirectionID = glGetUniformLocation(getProgramID(), "_lightDirection");
 		        lightColorID = glGetUniformLocation(getProgramID(), "_LightColor");
 		       lightRadiusID = glGetUniformLocation(getProgramID(), "_LightRadius");
 
@@ -33,11 +34,11 @@ void oaMaterial::getUniformIDs() {
 		      diffuseColorID = glGetUniformLocation(getProgramID(), "_Color");
 		         roughnessID = glGetUniformLocation(getProgramID(), "_Roughness");
 		          metallicID = glGetUniformLocation(getProgramID(), "_Metallic");
-               textureID = glGetUniformLocation(getProgramID(), "_texture");
-         normalTextureID = glGetUniformLocation(getProgramID(), "_normalTexture");
-			 metallicTextureID = glGetUniformLocation(getProgramID(), "_metallicTexture");
-			roughnessTextureID = glGetUniformLocation(getProgramID(), "_roughnessTexture");
-				 shadowTextureID = glGetUniformLocation(getProgramID(), "_shadowTexture");
+                   textureID = glGetUniformLocation(getProgramID(), "_texture");
+             normalTextureID = glGetUniformLocation(getProgramID(), "_normalTexture");
+		   metallicTextureID = glGetUniformLocation(getProgramID(), "_metallicTexture");
+		  roughnessTextureID = glGetUniformLocation(getProgramID(), "_roughnessTexture");
+			 shadowTextureID = glGetUniformLocation(getProgramID(), "_shadowTexture");
 }
 
 void oaMaterial::loadShader() {

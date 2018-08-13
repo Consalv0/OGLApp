@@ -334,5 +334,8 @@ ASALocalRun/
 *.code-workspace
 
 # Common files
-**/common/**/*.png
+!**/common/**/*.png
 !**/common/**/*.obj
+
+# No ignore dll's
+!*dll

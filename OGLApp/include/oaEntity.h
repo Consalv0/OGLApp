@@ -2,14 +2,13 @@
 
 #include "oaObject.h"
 #include "oaTransform.h"
+#include "oaObjectManager.h"
 
 #include <memory>
 #include <vector>
 
 using std::vector;
 class oaComponent;
-class oaSerializer;
-class oaObjectManager;
 
 class oaEntity : public oaObject {
 public:

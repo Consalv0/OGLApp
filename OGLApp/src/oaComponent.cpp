@@ -1,6 +1,7 @@
 #include "oaComponent.h"
 #include "oaObjectManager.h"
 #include "oaTransform.h"
+#include "oaEntity.h"
 
 //oaEntity*& oaComponent::getEntity() {
 //	return ;

@@ -2,6 +2,7 @@
 
 #include "oaMain.h"
 #include "oaSerializer.h"
+#include "oaObjectManager.h"
 
 class oaObject {
 public:

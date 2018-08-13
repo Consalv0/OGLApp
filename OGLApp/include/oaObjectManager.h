@@ -1,11 +1,14 @@
 #pragma once
 
 #include "oaEngine.h"
-#include "oaEntity.h"
+#include "oaObject.h"
 
 #include <unordered_map>
 #include <memory>
 #include <vector>
+
+class oaObject;
+class oaEntity;
 
 using std::vector;
 using std::unordered_map;
