@@ -7,7 +7,7 @@
 #include <memory>
 #include <vector>
 
-class oaObject;
+class oaComponent;
 class oaEntity;
 
 using std::vector;

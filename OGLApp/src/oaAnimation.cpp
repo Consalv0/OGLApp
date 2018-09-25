@@ -42,6 +42,6 @@ oaAnimation::JointTransforms oaAnimation::getAnimationTransform(float time) {
 
 	float totalTime = keyTimes[joints[1]] - keyTimes[joints[0]];
 	float currentTime = time - keyTimes[joints[0]];
-	printf("Joints: %i, %i\n", joints[0], joints[1]);
+	// printf("Joints: %i, %i\n", joints[0], joints[1]);
 	return JointTransforms::interpolate(transforms[joints[0]], transforms[joints[1]], currentTime / totalTime);
 }
